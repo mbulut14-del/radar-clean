@@ -3,13 +3,14 @@ name: Build APK
 on:
   push:
     branches: [ "main" ]
+  workflow_dispatch:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
-      - name: Repo çek
+      - name: Repo cek
         uses: actions/checkout@v4
 
       - name: Python kur
@@ -17,18 +18,42 @@ jobs:
         with:
           python-version: "3.10"
 
+      - name: Java kur
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Android cmdline-tools kur
+        run: |
+          sudo mkdir -p /usr/local/lib/android/sdk/cmdline-tools
+          cd /tmp
+          wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O cmdline-tools.zip
+          unzip -q cmdline-tools.zip
+          sudo mv cmdline-tools /usr/local/lib/android/sdk/cmdline-tools/latest
+
       - name: Sistem kur
+        env:
+          ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+          ANDROID_HOME: /usr/local/lib/android/sdk
         run: |
           sudo apt update
           sudo apt install -y \
-            git zip unzip openjdk-17-jdk \
-            autoconf libtool pkg-config \
-            zlib1g-dev libncurses5-dev libncursesw5-dev \
-            libtinfo6 libffi-dev libssl-dev
-          yes | sdkmanager --licenses || true
+            git zip unzip autoconf automake libtool pkg-config \
+            zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo6 \
+            cmake libffi-dev libssl-dev python3-pip
           python -m pip install --upgrade pip
           pip install buildozer cython==0.29.33
 
+          yes | /usr/local/lib/android/sdk/cmdline-tools/latest/bin/sdkmanager --licenses
+          /usr/local/lib/android/sdk/cmdline-tools/latest/bin/sdkmanager \
+            "platform-tools" \
+            "platforms;android-31" \
+            "build-tools;34.0.0"
+
       - name: APK build
+        env:
+          ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+          ANDROID_HOME: /usr/local/lib/android/sdk
         run: |
-          yes | buildozer -v android debug
+          buildozer -v android debug
