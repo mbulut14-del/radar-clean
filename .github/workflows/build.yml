@@ -30,6 +30,7 @@ jobs:
           cd /tmp
           wget -q https://dl.google.com/android/repository/commandlinetools-linux-11076708_latest.zip -O cmdline-tools.zip
           unzip -q cmdline-tools.zip
+          sudo rm -rf /usr/local/lib/android/sdk/cmdline-tools/latest
           sudo mv cmdline-tools /usr/local/lib/android/sdk/cmdline-tools/latest
 
       - name: Sistem kur
@@ -57,3 +58,9 @@ jobs:
           ANDROID_HOME: /usr/local/lib/android/sdk
         run: |
           buildozer -v android debug
+
+      - name: APK yukle
+        uses: actions/upload-artifact@v4
+        with:
+          name: apk
+          path: bin/*.apk
