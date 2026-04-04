@@ -20,8 +20,10 @@ MIN_VOLUME_USDT = 1_000_000
 def format_price(value):
     try:
         value = float(value)
-        if value >= 1:
-            return f"{value:.4f}"
+        if value >= 1000:
+            return f"{value:,.2f}"
+        elif value >= 1:
+            return f"{value:,.4f}"
         else:
             return f"{value:.8f}".rstrip("0").rstrip(".")
     except:
@@ -31,10 +33,12 @@ def format_price(value):
 def format_volume(value):
     try:
         value = float(value)
-        if value >= 1_000_000:
-            return f"{value/1_000_000:.2f}M"
+        if value >= 1_000_000_000:
+            return f"{value / 1_000_000_000:.2f}B"
+        elif value >= 1_000_000:
+            return f"{value / 1_000_000:.2f}M"
         elif value >= 1_000:
-            return f"{value/1_000:.2f}K"
+            return f"{value / 1_000:.2f}K"
         else:
             return f"{value:.2f}"
     except:
@@ -45,12 +49,17 @@ def calculate_rsi(closes, period=14):
     if len(closes) < period + 1:
         return None
 
-    gains, losses = [], []
+    gains = []
+    losses = []
 
     for i in range(1, len(closes)):
         diff = closes[i] - closes[i - 1]
-        gains.append(max(diff, 0))
-        losses.append(abs(min(diff, 0)))
+        if diff >= 0:
+            gains.append(diff)
+            losses.append(0)
+        else:
+            gains.append(0)
+            losses.append(abs(diff))
 
     avg_gain = sum(gains[-period:]) / period
     avg_loss = sum(losses[-period:]) / period
@@ -65,10 +74,11 @@ def calculate_rsi(closes, period=14):
 class LeftLabel(Label):
     def __init__(self, **kwargs):
         kwargs.setdefault("halign", "left")
+        kwargs.setdefault("valign", "middle")
         super().__init__(**kwargs)
-        self.bind(size=self.update)
+        self.bind(size=self._update_text_size)
 
-    def update(self, *args):
+    def _update_text_size(self, *args):
         self.text_size = (self.width, None)
 
 
@@ -78,120 +88,268 @@ class MainLayout(BoxLayout):
 
         Window.clearcolor = (0, 0, 0, 1)
 
-        scroll = ScrollView()
-        self.add_widget(scroll)
+        self.update_event = None
 
-        self.content = GridLayout(cols=1, spacing=dp(10), padding=dp(15), size_hint_y=None)
+        self.scroll = ScrollView(
+            size_hint=(1, 1),
+            do_scroll_x=False,
+            do_scroll_y=True
+        )
+        self.add_widget(self.scroll)
+
+        self.content = GridLayout(
+            cols=1,
+            spacing=dp(12),
+            padding=dp(16),
+            size_hint_y=None
+        )
         self.content.bind(minimum_height=self.content.setter("height"))
-        scroll.add_widget(self.content)
+        self.scroll.add_widget(self.content)
 
-        self.title = LeftLabel(text="SHORT RADAR", font_size="26sp", size_hint_y=None, height=dp(50))
-        self.content.add_widget(self.title)
+        self.title_label = LeftLabel(
+            text="SHORT RADAR",
+            font_size="26sp",
+            bold=True,
+            size_hint_y=None,
+            height=dp(46)
+        )
+        self.content.add_widget(self.title_label)
 
-        self.status = LeftLabel(text="Yükleniyor...", font_size="18sp", size_hint_y=None, height=dp(40))
-        self.content.add_widget(self.status)
+        self.short_status_label = LeftLabel(
+            text="Yükleniyor...",
+            font_size="18sp",
+            size_hint_y=None,
+            height=dp(34)
+        )
+        self.content.add_widget(self.short_status_label)
 
         self.short_labels = []
         for _ in range(3):
-            lbl = LeftLabel(text="-", font_size="18sp", size_hint_y=None, height=dp(50))
+            lbl = LeftLabel(
+                text="-",
+                font_size="18sp",
+                size_hint_y=None,
+                height=dp(52)
+            )
             self.short_labels.append(lbl)
             self.content.add_widget(lbl)
 
-        self.title2 = LeftLabel(text="Gate.io Vadeli En Çok Yükselenler", font_size="22sp",
-                                size_hint_y=None, height=dp(50))
-        self.content.add_widget(self.title2)
+        self.movers_title_label = LeftLabel(
+            text="Gate.io Vadeli En Çok Yükselenler",
+            font_size="22sp",
+            bold=True,
+            size_hint_y=None,
+            height=dp(42)
+        )
+        self.content.add_widget(self.movers_title_label)
 
-        self.movers = []
+        self.filter_info_label = LeftLabel(
+            text=f"Filtre: Hacim >= {format_volume(MIN_VOLUME_USDT)}",
+            font_size="16sp",
+            size_hint_y=None,
+            height=dp(30)
+        )
+        self.content.add_widget(self.filter_info_label)
+
+        self.movers_labels = []
         for _ in range(10):
-            lbl = LeftLabel(text="...", font_size="18sp", size_hint_y=None, height=dp(60))
-            self.movers.append(lbl)
+            lbl = LeftLabel(
+                text="Yükleniyor...",
+                font_size="18sp",
+                size_hint_y=None,
+                height=dp(60)
+            )
+            self.movers_labels.append(lbl)
             self.content.add_widget(lbl)
 
-        self.footer = LeftLabel(text="", font_size="16sp", size_hint_y=None, height=dp(40))
-        self.content.add_widget(self.footer)
+        self.footer_label = LeftLabel(
+            text="Son güncelleme: -",
+            font_size="16sp",
+            size_hint_y=None,
+            height=dp(34)
+        )
+        self.content.add_widget(self.footer_label)
 
         Clock.schedule_once(self.update_data, 1)
-        Clock.schedule_interval(self.update_data, REFRESH_TIME)
+        self.update_event = Clock.schedule_interval(self.update_data, REFRESH_TIME)
+
+    def stop_updates(self):
+        if self.update_event is not None:
+            self.update_event.cancel()
+            self.update_event = None
 
     def get_rsi(self, contract):
         try:
-            params = {"contract": contract, "interval": "1h", "limit": 30}
-            data = requests.get(KLINE_URL, params=params, timeout=8).json()
-            closes = [float(x[2]) for x in data]
+            params = {
+                "contract": contract,
+                "interval": "1h",
+                "limit": 30
+            }
+            res = requests.get(KLINE_URL, params=params, timeout=8)
+            res.raise_for_status()
+            data = res.json()
+
+            closes = []
+            for candle in data:
+                try:
+                    closes.append(float(candle[2]))
+                except:
+                    continue
+
+            if not closes:
+                return None
+
             return calculate_rsi(closes)
         except:
             return None
 
     def update_data(self, dt):
         try:
-            data = requests.get(TICKERS_URL, timeout=10).json()
+            response = requests.get(TICKERS_URL, timeout=10)
+            response.raise_for_status()
+            data = response.json()
 
-            coins = []
+            movers = []
             for item in data:
-                c = item.get("contract", "")
-                if not c.endswith("_USDT"):
+                contract = item.get("contract", "")
+                if not contract.endswith("_USDT"):
                     continue
 
                 try:
-                    price = float(item["last"])
-                    change = float(item["change_percentage"])
+                    change_val = float(item.get("change_percentage", 0))
+                    last_val = float(item.get("last", 0))
                 except:
                     continue
 
-                volume = float(item.get("volume_24h_quote", 0))
+                volume_val = 0.0
+                for key in ["volume_24h_quote", "volume_24h_settle", "volume_24h"]:
+                    try:
+                        raw = item.get(key, 0)
+                        if raw is not None:
+                            volume_val = float(raw)
+                            if volume_val > 0:
+                                break
+                    except:
+                        continue
 
-                if volume < MIN_VOLUME_USDT:
+                if volume_val < MIN_VOLUME_USDT:
                     continue
 
-                coins.append({
-                    "c": c,
-                    "p": price,
-                    "ch": change,
-                    "v": volume
+                movers.append({
+                    "contract": contract,
+                    "last": last_val,
+                    "change": change_val,
+                    "volume": volume_val
                 })
 
-            coins.sort(key=lambda x: x["ch"], reverse=True)
-            top = coins[:10]
+            movers.sort(key=lambda x: x["change"], reverse=True)
+            top_10 = movers[:10]
 
-            # movers
-            for i, lbl in enumerate(self.movers):
-                if i < len(top):
-                    coin = top[i]
-                    lbl.text = f"{i+1}. {coin['c']}  {format_price(coin['p'])}  %{coin['ch']:.2f}\nHacim: {format_volume(coin['v'])}"
-                else:
-                    lbl.text = "-"
-
-            # SHORT (çok hafif)
-            shorts = []
-            for coin in top[:3]:
-                rsi = self.get_rsi(coin["c"])
-                if rsi and rsi >= 80:
-                    shorts.append((coin, rsi))
-
-            if shorts:
-                self.status.text = f"{len(shorts)} short adayı"
-                for i, lbl in enumerate(self.short_labels):
-                    if i < len(shorts):
-                        coin, rsi = shorts[i]
-                        lbl.text = f"{coin['c']}  RSI:{rsi:.1f}"
+            if top_10:
+                for i, lbl in enumerate(self.movers_labels):
+                    if i < len(top_10):
+                        coin = top_10[i]
+                        lbl.text = (
+                            f"{i + 1}. {coin['contract']}   "
+                            f"Fiyat: {format_price(coin['last'])}   "
+                            f"%{coin['change']:.2f}\n"
+                            f"Hacim: {format_volume(coin['volume'])}"
+                        )
                     else:
                         lbl.text = "-"
             else:
-                self.status.text = "Şu an short adayı yok"
+                self.movers_labels[0].text = "Filtreye uyan coin bulunamadı"
+                for lbl in self.movers_labels[1:]:
+                    lbl.text = "-"
+
+            short_candidates = []
+            scan_list = movers[:3]
+
+            for coin in scan_list:
+                rsi = self.get_rsi(coin["contract"])
+                if rsi is None:
+                    continue
+
+                if rsi >= 80:
+                    short_candidates.append({
+                        "contract": coin["contract"],
+                        "last": coin["last"],
+                        "change": coin["change"],
+                        "volume": coin["volume"],
+                        "rsi": rsi
+                    })
+
+                if len(short_candidates) >= 3:
+                    break
+
+            if short_candidates:
+                self.short_status_label.text = f"{len(short_candidates)} short adayı bulundu"
+                for i, lbl in enumerate(self.short_labels):
+                    if i < len(short_candidates):
+                        coin = short_candidates[i]
+                        lbl.text = (
+                            f"{i + 1}. {coin['contract']}   "
+                            f"Fiyat: {format_price(coin['last'])}   "
+                            f"%{coin['change']:.2f}\n"
+                            f"RSI: {coin['rsi']:.1f}   "
+                            f"Hacim: {format_volume(coin['volume'])}"
+                        )
+                    else:
+                        lbl.text = "-"
+            else:
+                self.short_status_label.text = "Şu an short adayı yok"
                 for lbl in self.short_labels:
                     lbl.text = "-"
 
-            self.footer.text = datetime.now().strftime("%H:%M:%S")
+            self.footer_label.text = (
+                f"Son güncelleme: {datetime.now().strftime('%H:%M:%S')}   "
+                f"Yenileme: {REFRESH_TIME} sn"
+            )
 
-        except:
-            self.status.text = "Veri çekme hatası"
-            for lbl in self.movers:
+        except Exception as e:
+            self.short_status_label.text = "Veri çekme hatası"
+            for lbl in self.short_labels:
                 lbl.text = "HATA"
+            for lbl in self.movers_labels:
+                lbl.text = "HATA"
+            self.footer_label.text = f"Son hata: {str(e)}"
 
 
 class MyApp(App):
     def build(self):
-        return MainLayout()
+        self.root_layout = MainLayout()
+        Window.bind(on_keyboard=self.on_back_button)
+        return self.root_layout
+
+    def rebuild_ui(self):
+        try:
+            if hasattr(self, "root_layout") and self.root_layout:
+                self.root_layout.stop_updates()
+        except:
+            pass
+
+        new_layout = MainLayout()
+
+        try:
+            self.root.clear_widgets()
+            self.root.add_widget(new_layout)
+            self.root_layout = new_layout
+        except:
+            self.root_layout = new_layout
+            return new_layout
+
+    def on_pause(self):
+        return True
+
+    def on_resume(self):
+        Clock.schedule_once(lambda dt: self.rebuild_ui(), 0.2)
+        return True
+
+    def on_back_button(self, window, key, *args):
+        if key == 27:
+            self.stop()
+            return True
+        return False
 
 
 MyApp().run()
