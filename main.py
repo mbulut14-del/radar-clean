@@ -9,6 +9,8 @@ from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.gridlayout import GridLayout
 from kivy.uix.label import Label
 from kivy.uix.scrollview import ScrollView
+from kivy.uix.button import Button
+from kivy.uix.screenmanager import ScreenManager, Screen
 
 TICKERS_URL = "https://fx-api.gateio.ws/api/v4/futures/usdt/tickers"
 KLINE_URL = "https://fx-api.gateio.ws/api/v4/futures/usdt/candlesticks"
@@ -129,6 +131,7 @@ def parse_candle_close(candle):
             return None
 
         if isinstance(candle, (list, tuple)):
+            # Gate futures tipik sıra: [t, v, c, h, l, o, sum]
             if len(candle) >= 3:
                 return float(candle[2])
 
@@ -198,6 +201,68 @@ def calculate_short_score(coin, rsi, red):
     return score
 
 
+def build_mini_analysis(coin, rsi, red, score):
+    notes = []
+
+    try:
+        change_pct = float(coin["ch"])
+    except:
+        change_pct = 0.0
+
+    try:
+        funding_pct = float(coin["f"]) * 100
+    except:
+        funding_pct = 0.0
+
+    if rsi is None:
+        notes.append("RSI verisi eksik.")
+    else:
+        if rsi >= 90:
+            notes.append("RSI aşırı şişmiş bölgede.")
+        elif rsi >= 85:
+            notes.append("RSI çok yüksek, agresif short adayı olabilir.")
+        elif rsi >= 80:
+            notes.append("RSI yüksek, dönüş riski artıyor.")
+        elif rsi >= 70:
+            notes.append("RSI güçlü ama henüz daha erken olabilir.")
+        else:
+            notes.append("RSI short için aşırı bölgede değil.")
+
+    if change_pct >= 200:
+        notes.append("Pump çok sert, şişme seviyesi yüksek.")
+    elif change_pct >= 100:
+        notes.append("Pump güçlü, geri çekilme ihtimali izlenmeli.")
+    elif change_pct >= 50:
+        notes.append("Yükseliş dikkat çekici seviyede.")
+    else:
+        notes.append("Yükseliş var ama aşırı değil.")
+
+    if funding_pct > 0.3:
+        notes.append("Funding pozitif ve kalabalık long riski var.")
+    elif funding_pct > 0:
+        notes.append("Funding pozitif, short için destekleyici olabilir.")
+    elif funding_pct < -0.5:
+        notes.append("Funding negatif, kalabalık short ihtimali var.")
+    else:
+        notes.append("Funding tarafı nötre yakın.")
+
+    if red:
+        notes.append("Son mum kırmızı, dönüş başlangıcı olabilir.")
+    else:
+        notes.append("Son mum kırmızı değil, girişte acele etmemek daha güvenli olabilir.")
+
+    if score >= 90:
+        notes.append("Genel görünüm çok güçlü agresif short adayı.")
+    elif score >= 70:
+        notes.append("Genel görünüm güçlü short adayı.")
+    elif score >= 50:
+        notes.append("İzlemeye değer ama teyit gerekebilir.")
+    else:
+        notes.append("Şu an için net short teyidi zayıf.")
+
+    return "\n".join(notes)
+
+
 class LeftLabel(Label):
     def __init__(self, **kwargs):
         kwargs.setdefault("halign", "left")
@@ -209,25 +274,34 @@ class LeftLabel(Label):
         self.text_size = (self.width, None)
 
 
-class MainLayout(BoxLayout):
+class CoinButton(Button):
     def __init__(self, **kwargs):
-        super().__init__(orientation="vertical", **kwargs)
+        kwargs.setdefault("background_normal", "")
+        kwargs.setdefault("background_down", "")
+        kwargs.setdefault("background_color", (0.10, 0.10, 0.10, 1))
+        kwargs.setdefault("color", (1, 1, 1, 1))
+        kwargs.setdefault("font_size", "20sp")
+        kwargs.setdefault("bold", True)
+        kwargs.setdefault("size_hint_y", None)
+        kwargs.setdefault("height", dp(58))
+        kwargs.setdefault("halign", "left")
+        kwargs.setdefault("valign", "middle")
+        super().__init__(**kwargs)
+        self.bind(size=self._update_text_size)
 
-        Window.clearcolor = (0, 0, 0, 1)
+    def _update_text_size(self, *args):
+        self.text_size = (self.width - dp(20), None)
 
-        self.session = requests.Session()
-        self.session.headers.update({
-            "Accept": "application/json",
-            "User-Agent": "Mozilla/5.0"
-        })
 
-        self.update_event = None
-        self.is_updating = False
-        self.rsi_cache = {}
-        self.rsi_last_update = 0
+class MainScreen(Screen):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+        root = BoxLayout(orientation="vertical")
+        self.add_widget(root)
 
         self.scroll = ScrollView(size_hint=(1, 1))
-        self.add_widget(self.scroll)
+        root.add_widget(self.scroll)
 
         self.content = GridLayout(
             cols=1,
@@ -272,17 +346,12 @@ class MainLayout(BoxLayout):
         )
         self.content.add_widget(self.movers_title_label)
 
-        self.movers_labels = []
+        self.coin_buttons = []
         for _ in range(10):
-            lbl = LeftLabel(
-                text="Yükleniyor...",
-                font_size="18sp",
-                size_hint_y=None,
-                height=dp(180),
-                markup=True
-            )
-            self.movers_labels.append(lbl)
-            self.content.add_widget(lbl)
+            btn = CoinButton(text="Yükleniyor...")
+            btn.bind(on_release=self.open_detail)
+            self.coin_buttons.append(btn)
+            self.content.add_widget(btn)
 
         self.footer_label = LeftLabel(
             text="Son güncelleme: -",
@@ -292,8 +361,256 @@ class MainLayout(BoxLayout):
         )
         self.content.add_widget(self.footer_label)
 
+    def open_detail(self, button):
+        app = App.get_running_app()
+        coin_name = getattr(button, "coin_name", None)
+        if not coin_name:
+            return
+
+        app.selected_coin = coin_name
+        detail_screen = app.sm.get_screen("detail")
+        detail_screen.load_coin(coin_name)
+        app.sm.current = "detail"
+
+    def update_ui(self):
+        app = App.get_running_app()
+        top = app.top_coins
+
+        for i, btn in enumerate(self.coin_buttons):
+            if i < len(top):
+                coin = top[i]
+                btn.coin_name = coin["c"]
+                btn.text = f"{i+1}. {coin['c']}   >"
+                btn.disabled = False
+                btn.opacity = 1
+            else:
+                btn.coin_name = None
+                btn.text = "-"
+                btn.disabled = True
+                btn.opacity = 0.5
+
+        self.short_box.clear_widgets()
+
+        if app.short_candidates:
+            best = app.short_candidates[0]
+            best_coin = best["coin"]
+            best_red_text = "Kırmızı mum: Evet" if best["red"] else "Kırmızı mum: Hayır"
+
+            self.short_status_label.text = "EN GÜÇLÜ SHORT ADAYI"
+
+            best_lbl = LeftLabel(
+                text=(
+                    f"{best_coin['c']}\n"
+                    f"Puan: {best['score']}\n"
+                    f"RSI: {best['rsi']:.1f}\n"
+                    f"Funding: {format_funding(best_coin['f'])}\n"
+                    f"Değişim: %{best_coin['ch']:.2f}\n"
+                    f"{best_red_text}"
+                ),
+                font_size="18sp",
+                size_hint_y=None,
+                height=dp(130)
+            )
+            self.short_box.add_widget(best_lbl)
+
+            aggressive = []
+            for item in app.short_candidates:
+                if item["rsi"] >= 85 or item["score"] >= 70:
+                    aggressive.append(item)
+
+            if aggressive:
+                aggr_title = LeftLabel(
+                    text="AGRESİF ADAYLAR",
+                    font_size="18sp",
+                    bold=True,
+                    size_hint_y=None,
+                    height=dp(34)
+                )
+                self.short_box.add_widget(aggr_title)
+
+                for item in aggressive[:3]:
+                    coin = item["coin"]
+                    red_text = "Mum: Kırmızı" if item["red"] else "Mum: Nötr"
+
+                    lbl = LeftLabel(
+                        text=(
+                            f"{coin['c']} | Puan: {item['score']}\n"
+                            f"RSI: {item['rsi']:.1f} | Funding: {format_funding(coin['f'])}\n"
+                            f"Değişim: %{coin['ch']:.2f} | {red_text}"
+                        ),
+                        font_size="17sp",
+                        size_hint_y=None,
+                        height=dp(85)
+                    )
+                    self.short_box.add_widget(lbl)
+        else:
+            self.short_status_label.text = "Şu an short başlangıcı yok"
+
+        app_time = datetime.now().strftime("%H:%M:%S")
+        self.footer_label.text = f"Son güncelleme: {app_time} | RSI yenileme: {RSI_REFRESH_TIME}s"
+
+
+class DetailScreen(Screen):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+        root = BoxLayout(orientation="vertical")
+        self.add_widget(root)
+
+        top_bar = BoxLayout(
+            orientation="horizontal",
+            size_hint_y=None,
+            height=dp(56),
+            padding=dp(8),
+            spacing=dp(8)
+        )
+        root.add_widget(top_bar)
+
+        self.back_button = Button(
+            text="< Geri",
+            size_hint_x=None,
+            width=dp(100),
+            background_normal="",
+            background_down="",
+            background_color=(0.15, 0.15, 0.15, 1),
+            color=(1, 1, 1, 1),
+            font_size="18sp"
+        )
+        self.back_button.bind(on_release=self.go_back)
+        top_bar.add_widget(self.back_button)
+
+        self.top_title = LeftLabel(
+            text="Coin Detayı",
+            font_size="22sp",
+            bold=True
+        )
+        top_bar.add_widget(self.top_title)
+
+        self.scroll = ScrollView(size_hint=(1, 1))
+        root.add_widget(self.scroll)
+
+        self.content = GridLayout(
+            cols=1,
+            spacing=dp(12),
+            padding=dp(16),
+            size_hint_y=None
+        )
+        self.content.bind(minimum_height=self.content.setter("height"))
+        self.scroll.add_widget(self.content)
+
+        self.coin_title = LeftLabel(
+            text="-",
+            font_size="28sp",
+            bold=True,
+            size_hint_y=None,
+            height=dp(50)
+        )
+        self.content.add_widget(self.coin_title)
+
+        self.data_label = LeftLabel(
+            text="-",
+            font_size="20sp",
+            size_hint_y=None,
+            height=dp(240),
+            markup=True
+        )
+        self.content.add_widget(self.data_label)
+
+        self.analysis_title = LeftLabel(
+            text="Mini Analiz",
+            font_size="22sp",
+            bold=True,
+            size_hint_y=None,
+            height=dp(38)
+        )
+        self.content.add_widget(self.analysis_title)
+
+        self.analysis_label = LeftLabel(
+            text="-",
+            font_size="18sp",
+            size_hint_y=None,
+            height=dp(260)
+        )
+        self.content.add_widget(self.analysis_label)
+
+    def go_back(self, *args):
+        App.get_running_app().sm.current = "main"
+
+    def load_coin(self, coin_name):
+        app = App.get_running_app()
+        coin = app.coin_map.get(coin_name)
+
+        if not coin:
+            self.coin_title.text = coin_name
+            self.data_label.text = "Veri bulunamadı"
+            self.analysis_label.text = "Bu coin için veri henüz yüklenmedi."
+            return
+
+        rsi = app.rsi_cache.get(coin_name)
+        red = app.red_cache.get(coin_name, False)
+
+        if red:
+            mum_text = "Evet"
+        else:
+            mum_text = "Hayır"
+
+        if rsi is None:
+            rsi_text = "-"
+            rsi_color = "ffffff"
+            score = 0
+        else:
+            rsi_text = f"{rsi:.1f}"
+            rsi_color = get_rsi_color(rsi)
+            score = calculate_short_score(coin, rsi, red)
+
+        change_color = get_change_color(coin["ch"])
+        funding_color = get_funding_color(coin["f"])
+
+        self.coin_title.text = coin_name
+        self.data_label.text = (
+            f"[color=cccccc]Fiyat:[/color] [color=ffffff]{format_price(coin['p'])}[/color]\n"
+            f"[color=cccccc]Değişim:[/color] [color={change_color}]%{coin['ch']:.2f}[/color]\n"
+            f"[color=cccccc]Hacim:[/color] [color=ffffff]{format_volume(coin['v'])}[/color]\n"
+            f"[color=cccccc]Funding:[/color] [color={funding_color}]{format_funding(coin['f'])}[/color]\n"
+            f"[color=cccccc]RSI (1s):[/color] [color={rsi_color}]{rsi_text}[/color]\n"
+            f"[color=cccccc]Short Puanı:[/color] [color=ffffff]{score}[/color]\n"
+            f"[color=cccccc]Kırmızı Mum:[/color] [color=ffffff]{mum_text}[/color]"
+        )
+
+        analysis_text = build_mini_analysis(coin, rsi, red, score)
+        self.analysis_label.text = analysis_text
+
+
+class RadarApp(App):
+    def build(self):
+        Window.clearcolor = (0, 0, 0, 1)
+
+        self.session = requests.Session()
+        self.session.headers.update({
+            "Accept": "application/json",
+            "User-Agent": "Mozilla/5.0"
+        })
+
+        self.is_updating = False
+        self.rsi_cache = {}
+        self.red_cache = {}
+        self.rsi_last_update = 0
+
+        self.top_coins = []
+        self.coin_map = {}
+        self.short_candidates = []
+        self.selected_coin = None
+
+        self.sm = ScreenManager()
+        self.main_screen = MainScreen(name="main")
+        self.detail_screen = DetailScreen(name="detail")
+        self.sm.add_widget(self.main_screen)
+        self.sm.add_widget(self.detail_screen)
+
         Clock.schedule_once(self.update_data, 1)
-        self.update_event = Clock.schedule_interval(self.update_data, REFRESH_TIME)
+        Clock.schedule_interval(self.update_data, REFRESH_TIME)
+
+        return self.sm
 
     def fetch_candles(self, contract, limit=30):
         try:
@@ -345,11 +662,16 @@ class MainLayout(BoxLayout):
         if (now_ts - self.rsi_last_update) < RSI_REFRESH_TIME and self.rsi_cache:
             return
 
-        new_cache = {}
-        for coin in top_coins:
-            new_cache[coin["c"]] = self.get_rsi(coin["c"])
+        new_rsi_cache = {}
+        new_red_cache = {}
 
-        self.rsi_cache = new_cache
+        for coin in top_coins:
+            contract = coin["c"]
+            new_rsi_cache[contract] = self.get_rsi(contract)
+            new_red_cache[contract] = self.is_last_candle_red(contract)
+
+        self.rsi_cache = new_rsi_cache
+        self.red_cache = new_red_cache
         self.rsi_last_update = now_ts
 
     def update_data(self, dt):
@@ -390,39 +712,15 @@ class MainLayout(BoxLayout):
                 })
 
             coins.sort(key=lambda x: x["ch"], reverse=True)
-            top = coins[:10]
+            self.top_coins = coins[:10]
+            self.coin_map = {coin["c"]: coin for coin in self.top_coins}
 
-            self.refresh_rsi_cache_if_needed(top, now_ts)
-
-            for i, lbl in enumerate(self.movers_labels):
-                if i < len(top):
-                    coin = top[i]
-                    change_color = get_change_color(coin["ch"])
-                    funding_color = get_funding_color(coin["f"])
-
-                    rsi_value = self.rsi_cache.get(coin["c"])
-                    if rsi_value is None:
-                        rsi_text = "-"
-                        rsi_color = "ffffff"
-                    else:
-                        rsi_text = f"{rsi_value:.1f}"
-                        rsi_color = get_rsi_color(rsi_value)
-
-                    lbl.text = (
-                        f"[b][color=ffffff]{i+1}. {coin['c']}[/color][/b]\n"
-                        f"[color=cccccc]Fiyat: {format_price(coin['p'])}[/color]\n"
-                        f"[color={change_color}]Değişim: %{coin['ch']:.2f}[/color]\n"
-                        f"[color=cccccc]Hacim: {format_volume(coin['v'])}[/color]\n"
-                        f"[color={funding_color}]Funding: {format_funding(coin['f'])}[/color]\n"
-                        f"[color={rsi_color}]RSI (1s): {rsi_text}[/color]"
-                    )
-                else:
-                    lbl.text = "-"
+            self.refresh_rsi_cache_if_needed(self.top_coins, now_ts)
 
             candidates = []
-            for coin in top[:5]:
+            for coin in self.top_coins[:5]:
                 rsi = self.rsi_cache.get(coin["c"])
-                red = self.is_last_candle_red(coin["c"])
+                red = self.red_cache.get(coin["c"], False)
 
                 if rsi is None:
                     continue
@@ -438,103 +736,18 @@ class MainLayout(BoxLayout):
                     })
 
             candidates.sort(key=lambda x: x["score"], reverse=True)
+            self.short_candidates = candidates
 
-            self.short_box.clear_widgets()
+            self.main_screen.update_ui()
 
-            if candidates:
-                best = candidates[0]
-                best_coin = best["coin"]
-                best_red_text = "Kırmızı mum: Evet" if best["red"] else "Kırmızı mum: Hayır"
-
-                self.short_status_label.text = "EN GÜÇLÜ SHORT ADAYI 🔥"
-
-                best_lbl = LeftLabel(
-                    text=(
-                        f"{best_coin['c']}\n"
-                        f"Puan: {best['score']}\n"
-                        f"RSI: {best['rsi']:.1f}\n"
-                        f"Funding: {format_funding(best_coin['f'])}\n"
-                        f"Değişim: %{best_coin['ch']:.2f}\n"
-                        f"{best_red_text}"
-                    ),
-                    font_size="18sp",
-                    size_hint_y=None,
-                    height=dp(130)
-                )
-                self.short_box.add_widget(best_lbl)
-
-                aggressive = []
-                for item in candidates:
-                    if item["rsi"] >= 85 or item["score"] >= 70:
-                        aggressive.append(item)
-
-                if aggressive:
-                    aggr_title = LeftLabel(
-                        text="AGRESİF ADAYLAR ⚠️",
-                        font_size="18sp",
-                        bold=True,
-                        size_hint_y=None,
-                        height=dp(34)
-                    )
-                    self.short_box.add_widget(aggr_title)
-
-                    for item in aggressive[:3]:
-                        coin = item["coin"]
-                        red_text = "Mum: Kırmızı" if item["red"] else "Mum: Nötr"
-
-                        lbl = LeftLabel(
-                            text=(
-                                f"{coin['c']} | Puan: {item['score']}\n"
-                                f"RSI: {item['rsi']:.1f} | Funding: {format_funding(coin['f'])}\n"
-                                f"Değişim: %{coin['ch']:.2f} | {red_text}"
-                            ),
-                            font_size="17sp",
-                            size_hint_y=None,
-                            height=dp(85)
-                        )
-                        self.short_box.add_widget(lbl)
-
-                others = []
-                for item in candidates[1:]:
-                    if not (item["rsi"] >= 85 or item["score"] >= 70):
-                        others.append(item)
-
-                for item in others[:2]:
-                    coin = item["coin"]
-                    red_text = "Mum: Kırmızı" if item["red"] else "Mum: Nötr"
-
-                    lbl = LeftLabel(
-                        text=(
-                            f"{coin['c']} | Puan: {item['score']}\n"
-                            f"RSI: {item['rsi']:.1f} | Funding: {format_funding(coin['f'])}\n"
-                            f"Değişim: %{coin['ch']:.2f} | {red_text}"
-                        ),
-                        font_size="17sp",
-                        size_hint_y=None,
-                        height=dp(85)
-                    )
-                    self.short_box.add_widget(lbl)
-            else:
-                self.short_status_label.text = "Şu an short başlangıcı yok"
-
-            self.footer_label.text = (
-                f"Son güncelleme: {datetime.now().strftime('%H:%M:%S')} | "
-                f"RSI yenileme: {RSI_REFRESH_TIME}s"
-            )
+            if self.sm.current == "detail" and self.selected_coin:
+                self.detail_screen.load_coin(self.selected_coin)
 
         except:
-            self.short_status_label.text = "Veri çekme hatası"
-            self.short_box.clear_widgets()
-            for lbl in self.movers_labels:
-                lbl.text = "HATA"
+            self.main_screen.short_status_label.text = "Veri çekme hatası"
 
         finally:
             self.is_updating = False
 
 
-class MyApp(App):
-    def build(self):
-        return MainLayout()
-
-
-MyApp().run()
+RadarApp().run()
