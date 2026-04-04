@@ -14,6 +14,7 @@ TICKERS_URL = "https://fx-api.gateio.ws/api/v4/futures/usdt/tickers"
 KLINE_URL = "https://fx-api.gateio.ws/api/v4/futures/usdt/candlesticks"
 
 REFRESH_TIME = 10
+RSI_REFRESH_TIME = 60
 MIN_VOLUME_USDT = 1_000_000
 
 
@@ -134,6 +135,9 @@ class MainLayout(BoxLayout):
         Window.clearcolor = (0, 0, 0, 1)
 
         self.update_event = None
+        self.is_updating = False
+        self.rsi_cache = {}
+        self.rsi_last_update = 0
 
         self.scroll = ScrollView(size_hint=(1, 1))
         self.add_widget(self.scroll)
@@ -226,8 +230,26 @@ class MainLayout(BoxLayout):
         except:
             return False
 
+    def refresh_rsi_cache_if_needed(self, top_coins, now_ts):
+        if now_ts - self.rsi_last_update < RSI_REFRESH_TIME and self.rsi_cache:
+            return
+
+        new_cache = {}
+        for coin in top_coins:
+            new_cache[coin["c"]] = self.get_rsi(coin["c"])
+
+        self.rsi_cache = new_cache
+        self.rsi_last_update = now_ts
+
     def update_data(self, dt):
+        if self.is_updating:
+            return
+
+        self.is_updating = True
+
         try:
+            now_ts = Clock.get_boottime()
+
             data = requests.get(TICKERS_URL, timeout=10).json()
 
             coins = []
@@ -258,9 +280,7 @@ class MainLayout(BoxLayout):
             coins.sort(key=lambda x: x["ch"], reverse=True)
             top = coins[:10]
 
-            rsi_map = {}
-            for coin in top:
-                rsi_map[coin["c"]] = self.get_rsi(coin["c"])
+            self.refresh_rsi_cache_if_needed(top, now_ts)
 
             for i, lbl in enumerate(self.movers_labels):
                 if i < len(top):
@@ -268,7 +288,7 @@ class MainLayout(BoxLayout):
                     change_color = get_change_color(coin["ch"])
                     funding_color = get_funding_color(coin["f"])
 
-                    rsi_value = rsi_map.get(coin["c"])
+                    rsi_value = self.rsi_cache.get(coin["c"])
                     if rsi_value is None:
                         rsi_text = "-"
                         rsi_color = "ffffff"
@@ -289,7 +309,7 @@ class MainLayout(BoxLayout):
 
             shorts = []
             for coin in top[:3]:
-                rsi = rsi_map.get(coin["c"])
+                rsi = self.rsi_cache.get(coin["c"])
                 red = self.is_last_candle_red(coin["c"])
 
                 if rsi is not None and rsi >= 80 and red:
@@ -312,17 +332,22 @@ class MainLayout(BoxLayout):
                         height=dp(70)
                     )
                     self.short_box.add_widget(lbl)
-
             else:
                 self.short_status_label.text = "Şu an short başlangıcı yok"
 
-            self.footer_label.text = f"Son güncelleme: {datetime.now().strftime('%H:%M:%S')}"
+            self.footer_label.text = (
+                f"Son güncelleme: {datetime.now().strftime('%H:%M:%S')} | "
+                f"RSI yenileme: {RSI_REFRESH_TIME}s"
+            )
 
         except:
             self.short_status_label.text = "Veri çekme hatası"
             self.short_box.clear_widgets()
             for lbl in self.movers_labels:
                 lbl.text = "HATA"
+
+        finally:
+            self.is_updating = False
 
 
 class MyApp(App):
