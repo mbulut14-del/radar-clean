@@ -157,6 +157,51 @@ def parse_candle_open_close(candle):
         return None, None
 
 
+def calculate_short_score(coin, rsi, red):
+    score = 0
+
+    # RSI ağırlığı
+    if rsi is not None:
+        if rsi >= 90:
+            score += 50
+        elif rsi >= 85:
+            score += 40
+        elif rsi >= 80:
+            score += 30
+        elif rsi >= 75:
+            score += 20
+        elif rsi >= 70:
+            score += 10
+
+    # Funding pozitife gittikçe short daha anlamlı
+    funding_pct = float(coin["f"]) * 100
+    if funding_pct >= 1.0:
+        score += 25
+    elif funding_pct >= 0.3:
+        score += 18
+    elif funding_pct > 0:
+        score += 10
+    elif funding_pct <= -0.5:
+        score -= 8
+
+    # Aşırı pump puanı
+    change_pct = float(coin["ch"])
+    if change_pct >= 200:
+        score += 25
+    elif change_pct >= 120:
+        score += 18
+    elif change_pct >= 80:
+        score += 12
+    elif change_pct >= 50:
+        score += 8
+
+    # Son mum kırmızıysa başlangıç ihtimali artar
+    if red:
+        score += 20
+
+    return score
+
+
 class LeftLabel(Label):
     def __init__(self, **kwargs):
         kwargs.setdefault("halign", "left")
@@ -210,13 +255,13 @@ class MainLayout(BoxLayout):
             text="Yükleniyor...",
             font_size="18sp",
             size_hint_y=None,
-            height=dp(34)
+            height=dp(40)
         )
         self.content.add_widget(self.short_status_label)
 
         self.short_box = GridLayout(
             cols=1,
-            spacing=dp(6),
+            spacing=dp(8),
             size_hint_y=None
         )
         self.short_box.bind(minimum_height=self.short_box.setter("height"))
@@ -378,29 +423,67 @@ class MainLayout(BoxLayout):
                 else:
                     lbl.text = "-"
 
-            shorts = []
-            for coin in top[:3]:
+            # Short radar artık top 5 tarıyor ve puanlıyor
+            candidates = []
+            for coin in top[:5]:
                 rsi = self.rsi_cache.get(coin["c"])
                 red = self.is_last_candle_red(coin["c"])
 
-                if rsi is not None and rsi >= 80 and red:
-                    shorts.append((coin, rsi))
+                if rsi is None:
+                    continue
+
+                score = calculate_short_score(coin, rsi, red)
+
+                # aday filtresi
+                if rsi >= 75 or score >= 45:
+                    candidates.append({
+                        "coin": coin,
+                        "rsi": rsi,
+                        "red": red,
+                        "score": score
+                    })
+
+            candidates.sort(key=lambda x: x["score"], reverse=True)
 
             self.short_box.clear_widgets()
 
-            if shorts:
-                self.short_status_label.text = f"{len(shorts)} SHORT BAŞLANGICI 🔥"
+            if candidates:
+                best = candidates[0]
+                best_coin = best["coin"]
+                best_red_text = "Kırmızı mum: Evet" if best["red"] else "Kırmızı mum: Hayır"
 
-                for coin, rsi in shorts:
+                self.short_status_label.text = "EN GÜÇLÜ SHORT ADAYI 🔥"
+
+                best_lbl = LeftLabel(
+                    text=(
+                        f"{best_coin['c']}\n"
+                        f"Puan: {best['score']}\n"
+                        f"RSI: {best['rsi']:.1f}\n"
+                        f"Funding: {format_funding(best_coin['f'])}\n"
+                        f"Değişim: %{best_coin['ch']:.2f}\n"
+                        f"{best_red_text}"
+                    ),
+                    font_size="18sp",
+                    size_hint_y=None,
+                    height=dp(130)
+                )
+                self.short_box.add_widget(best_lbl)
+
+                # diğer güçlü adaylar
+                extra_candidates = candidates[1:3]
+                for item in extra_candidates:
+                    coin = item["coin"]
+                    red_text = "Mum: Kırmızı" if item["red"] else "Mum: Nötr"
+
                     lbl = LeftLabel(
                         text=(
-                            f"{coin['c']}\n"
-                            f"RSI: {rsi:.1f}\n"
-                            f"Funding: {format_funding(coin['f'])}"
+                            f"{coin['c']} | Puan: {item['score']}\n"
+                            f"RSI: {item['rsi']:.1f} | Funding: {format_funding(coin['f'])}\n"
+                            f"Değişim: %{coin['ch']:.2f} | {red_text}"
                         ),
-                        font_size="18sp",
+                        font_size="17sp",
                         size_hint_y=None,
-                        height=dp(70)
+                        height=dp(85)
                     )
                     self.short_box.add_widget(lbl)
             else:
