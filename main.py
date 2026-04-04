@@ -131,16 +131,13 @@ class MainLayout(BoxLayout):
         )
         self.content.add_widget(self.short_status_label)
 
-        self.short_labels = []
-        for _ in range(3):
-            lbl = LeftLabel(
-                text="-",
-                font_size="18sp",
-                size_hint_y=None,
-                height=dp(62)
-            )
-            self.short_labels.append(lbl)
-            self.content.add_widget(lbl)
+        self.short_box = GridLayout(
+            cols=1,
+            spacing=dp(6),
+            size_hint_y=None
+        )
+        self.short_box.bind(minimum_height=self.short_box.setter("height"))
+        self.content.add_widget(self.short_box)
 
         self.movers_title_label = LeftLabel(
             text="Gate.io Vadeli En Çok Yükselenler",
@@ -248,27 +245,32 @@ class MainLayout(BoxLayout):
                 if rsi and rsi >= 80 and red:
                     shorts.append((coin, rsi))
 
+            self.short_box.clear_widgets()
+
             if shorts:
                 self.short_status_label.text = f"{len(shorts)} SHORT BAŞLANGICI 🔥"
-                for i, lbl in enumerate(self.short_labels):
-                    if i < len(shorts):
-                        coin, rsi = shorts[i]
-                        lbl.text = (
+
+                for coin, rsi in shorts:
+                    lbl = LeftLabel(
+                        text=(
                             f"{coin['c']}\n"
                             f"RSI: {rsi:.1f}\n"
                             f"Funding: {format_funding(coin['f'])}"
-                        )
-                    else:
-                        lbl.text = "-"
+                        ),
+                        font_size="18sp",
+                        size_hint_y=None,
+                        height=dp(70)
+                    )
+                    self.short_box.add_widget(lbl)
+
             else:
                 self.short_status_label.text = "Şu an short başlangıcı yok"
-                for lbl in self.short_labels:
-                    lbl.text = "-"
 
             self.footer_label.text = f"Son güncelleme: {datetime.now().strftime('%H:%M:%S')}"
 
         except:
             self.short_status_label.text = "Veri çekme hatası"
+            self.short_box.clear_widgets()
             for lbl in self.movers_labels:
                 lbl.text = "HATA"
 
