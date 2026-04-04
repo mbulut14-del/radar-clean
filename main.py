@@ -103,6 +103,19 @@ def get_funding_color(funding):
         return "ffffff"
 
 
+def get_rsi_color(rsi):
+    try:
+        value = float(rsi)
+        if value >= 80:
+            return "ff4d4d"
+        elif value >= 70:
+            return "ffd54a"
+        else:
+            return "00ff66"
+    except:
+        return "ffffff"
+
+
 class LeftLabel(Label):
     def __init__(self, **kwargs):
         kwargs.setdefault("halign", "left")
@@ -174,7 +187,7 @@ class MainLayout(BoxLayout):
                 text="Yükleniyor...",
                 font_size="18sp",
                 size_hint_y=None,
-                height=dp(150),
+                height=dp(180),
                 markup=True
             )
             self.movers_labels.append(lbl)
@@ -245,28 +258,41 @@ class MainLayout(BoxLayout):
             coins.sort(key=lambda x: x["ch"], reverse=True)
             top = coins[:10]
 
+            rsi_map = {}
+            for coin in top:
+                rsi_map[coin["c"]] = self.get_rsi(coin["c"])
+
             for i, lbl in enumerate(self.movers_labels):
                 if i < len(top):
                     coin = top[i]
                     change_color = get_change_color(coin["ch"])
                     funding_color = get_funding_color(coin["f"])
 
+                    rsi_value = rsi_map.get(coin["c"])
+                    if rsi_value is None:
+                        rsi_text = "-"
+                        rsi_color = "ffffff"
+                    else:
+                        rsi_text = f"{rsi_value:.1f}"
+                        rsi_color = get_rsi_color(rsi_value)
+
                     lbl.text = (
                         f"[b][color=ffffff]{i+1}. {coin['c']}[/color][/b]\n"
                         f"[color=cccccc]Fiyat: {format_price(coin['p'])}[/color]\n"
                         f"[color={change_color}]Değişim: %{coin['ch']:.2f}[/color]\n"
                         f"[color=cccccc]Hacim: {format_volume(coin['v'])}[/color]\n"
-                        f"[color={funding_color}]Funding: {format_funding(coin['f'])}[/color]"
+                        f"[color={funding_color}]Funding: {format_funding(coin['f'])}[/color]\n"
+                        f"[color={rsi_color}]RSI (1s): {rsi_text}[/color]"
                     )
                 else:
                     lbl.text = "-"
 
             shorts = []
             for coin in top[:3]:
-                rsi = self.get_rsi(coin["c"])
+                rsi = rsi_map.get(coin["c"])
                 red = self.is_last_candle_red(coin["c"])
 
-                if rsi and rsi >= 80 and red:
+                if rsi is not None and rsi >= 80 and red:
                     shorts.append((coin, rsi))
 
             self.short_box.clear_widgets()
