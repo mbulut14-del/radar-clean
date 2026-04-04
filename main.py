@@ -37,31 +37,52 @@ def calculate_rsi(closes, period=14):
 
 class MainLayout(BoxLayout):
     def __init__(self, **kwargs):
-        super().__init__(orientation="vertical", padding=20, spacing=15, **kwargs)
+        super().__init__(orientation="vertical", padding=20, spacing=10, **kwargs)
 
         self.title_label = Label(
             text="SHORT RADAR 🚨",
             font_size=24,
             size_hint_y=None,
-            height=60
+            height=50
         )
         self.add_widget(self.title_label)
 
-        self.status_label = Label(
-            text="Veri bekleniyor...",
+        self.short_status_label = Label(
+            text="Short adayları kontrol ediliyor...",
             font_size=16,
             size_hint_y=None,
-            height=40
+            height=35
         )
-        self.add_widget(self.status_label)
+        self.add_widget(self.short_status_label)
 
-        self.labels = []
-        for _ in range(10):
+        self.short_labels = []
+        for _ in range(3):
             lbl = Label(
                 text="-",
-                font_size=18
+                font_size=16,
+                size_hint_y=None,
+                height=35
             )
-            self.labels.append(lbl)
+            self.short_labels.append(lbl)
+            self.add_widget(lbl)
+
+        self.movers_title_label = Label(
+            text="Gate.io Vadeli En Çok Yükselenler",
+            font_size=20,
+            size_hint_y=None,
+            height=45
+        )
+        self.add_widget(self.movers_title_label)
+
+        self.movers_labels = []
+        for _ in range(10):
+            lbl = Label(
+                text="Yükleniyor...",
+                font_size=16,
+                size_hint_y=None,
+                height=35
+            )
+            self.movers_labels.append(lbl)
             self.add_widget(lbl)
 
         Clock.schedule_once(self.update_data, 1)
@@ -81,9 +102,10 @@ class MainLayout(BoxLayout):
             closes = []
             for candle in data:
                 try:
+                    # Gate verisinde close değeri bazı cevaplarda index 2 olarak geliyor
                     closes.append(float(candle[2]))
                 except:
-                    pass
+                    continue
 
             if not closes:
                 return None
@@ -94,78 +116,83 @@ class MainLayout(BoxLayout):
 
     def update_data(self, dt):
         try:
-            self.status_label.text = "Veriler güncelleniyor..."
+            response = requests.get(TICKERS_URL, timeout=15)
+            response.raise_for_status()
+            data = response.json()
 
-            res = requests.get(TICKERS_URL, timeout=10)
-            res.raise_for_status()
-            data = res.json()
-
-            coins = []
+            movers = []
             for item in data:
                 contract = item.get("contract", "")
+
                 if not contract.endswith("_USDT"):
                     continue
 
                 try:
-                    change = float(item.get("change_percentage", 0))
-                    last = float(item.get("last", 0))
+                    change_val = float(item.get("change_percentage", 0))
+                    last_val = float(item.get("last", 0))
                 except:
                     continue
 
-                coins.append({
+                movers.append({
                     "contract": contract,
-                    "change": change,
-                    "last": last
+                    "last": last_val,
+                    "change": change_val
                 })
 
-            coins.sort(key=lambda x: x["change"], reverse=True)
-            top = coins[:15]
+            movers.sort(key=lambda x: x["change"], reverse=True)
+            top_10 = movers[:10]
 
-            results = []
-            for coin in top:
+            # ANA LİSTEYİ HER ZAMAN GÖSTER
+            for i, lbl in enumerate(self.movers_labels):
+                if i < len(top_10):
+                    coin = top_10[i]
+                    lbl.text = f"{coin['contract']} | Fiyat: {coin['last']} | % {coin['change']:.2f}"
+                else:
+                    lbl.text = "-"
+
+            # SHORT ADAYLARI = TOP MOVER'LAR İÇİNDEN RSI 80+
+            short_candidates = []
+            scan_list = movers[:8]
+
+            for coin in scan_list:
                 rsi = self.get_rsi(coin["contract"])
                 if rsi is None:
                     continue
 
                 if rsi >= 80:
-                    results.append({
+                    short_candidates.append({
                         "contract": coin["contract"],
-                        "price": coin["last"],
+                        "last": coin["last"],
                         "change": coin["change"],
                         "rsi": rsi
                     })
 
-                if len(results) >= 10:
+                if len(short_candidates) >= 3:
                     break
 
-            self.title_label.text = "SHORT RADAR 🚨"
-
-            if not results:
-                self.status_label.text = "Şu an short adayı yok"
-                for i, lbl in enumerate(self.labels):
-                    if i == 0:
-                        lbl.text = "Uygun coin bulunamadı"
+            if short_candidates:
+                self.short_status_label.text = f"{len(short_candidates)} short adayı bulundu"
+                for i, lbl in enumerate(self.short_labels):
+                    if i < len(short_candidates):
+                        coin = short_candidates[i]
+                        lbl.text = (
+                            f"{coin['contract']} | Fiyat: {coin['last']} | "
+                            f"% {coin['change']:.2f} | RSI {coin['rsi']:.1f}"
+                        )
                     else:
                         lbl.text = "-"
-                return
+            else:
+                self.short_status_label.text = "Şu an short adayı yok"
+                self.short_labels[0].text = "-"
+                self.short_labels[1].text = "-"
+                self.short_labels[2].text = "-"
 
-            self.status_label.text = f"{len(results)} adet short adayı bulundu"
-
-            for i, lbl in enumerate(self.labels):
-                if i < len(results):
-                    c = results[i]
-                    lbl.text = f"{c['contract']} | Fiyat: {c['price']} | %{c['change']:.2f} | RSI: {c['rsi']:.1f}"
-                else:
-                    lbl.text = "-"
-
-        except Exception as e:
-            self.title_label.text = "SHORT RADAR 🚨"
-            self.status_label.text = f"Hata oluştu: {str(e)}"
-            for i, lbl in enumerate(self.labels):
-                if i == 0:
-                    lbl.text = "Veri çekilemedi"
-                else:
-                    lbl.text = "-"
+        except Exception:
+            self.short_status_label.text = "Veri çekme hatası"
+            for lbl in self.short_labels:
+                lbl.text = "HATA"
+            for lbl in self.movers_labels:
+                lbl.text = "HATA"
 
 
 class MyApp(App):
