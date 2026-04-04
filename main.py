@@ -103,35 +103,6 @@ def get_funding_color(funding):
         return "ffffff"
 
 
-class TouchScrollView(ScrollView):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-        self.do_scroll_x = False
-        self.do_scroll_y = True
-        self.scroll_type = ["content"]
-        self.bar_width = dp(0)
-        self.scroll_distance = dp(8)
-        self.scroll_timeout = 250
-
-    def on_touch_down(self, touch):
-        if self.collide_point(*touch.pos):
-            result = super().on_touch_down(touch)
-            return True if result is None else result
-        return super().on_touch_down(touch)
-
-    def on_touch_move(self, touch):
-        if self.collide_point(*touch.pos):
-            result = super().on_touch_move(touch)
-            return True if result is None else result
-        return super().on_touch_move(touch)
-
-    def on_touch_up(self, touch):
-        if self.collide_point(*touch.pos):
-            result = super().on_touch_up(touch)
-            return True if result is None else result
-        return super().on_touch_up(touch)
-
-
 class LeftLabel(Label):
     def __init__(self, **kwargs):
         kwargs.setdefault("halign", "left")
@@ -151,13 +122,13 @@ class MainLayout(BoxLayout):
 
         self.update_event = None
 
-        self.scroll = TouchScrollView(size_hint=(1, 1))
+        self.scroll = ScrollView(size_hint=(1, 1))
         self.add_widget(self.scroll)
 
         self.content = GridLayout(
             cols=1,
             spacing=dp(12),
-            padding=[dp(16), dp(16), dp(16), dp(40)],
+            padding=dp(16),
             size_hint_y=None
         )
         self.content.bind(minimum_height=self.content.setter("height"))
@@ -242,12 +213,6 @@ class MainLayout(BoxLayout):
         except:
             return False
 
-    def refresh_layout_heights(self):
-        self.short_box.height = self.short_box.minimum_height
-        self.content.height = self.content.minimum_height
-        self.short_box.do_layout()
-        self.content.do_layout()
-
     def update_data(self, dt):
         try:
             data = requests.get(TICKERS_URL, timeout=10).json()
@@ -321,19 +286,17 @@ class MainLayout(BoxLayout):
                         height=dp(70)
                     )
                     self.short_box.add_widget(lbl)
+
             else:
                 self.short_status_label.text = "Şu an short başlangıcı yok"
 
             self.footer_label.text = f"Son güncelleme: {datetime.now().strftime('%H:%M:%S')}"
-
-            Clock.schedule_once(lambda _dt: self.refresh_layout_heights(), 0)
 
         except:
             self.short_status_label.text = "Veri çekme hatası"
             self.short_box.clear_widgets()
             for lbl in self.movers_labels:
                 lbl.text = "HATA"
-            Clock.schedule_once(lambda _dt: self.refresh_layout_heights(), 0)
 
 
 class MyApp(App):
