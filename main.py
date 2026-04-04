@@ -45,6 +45,14 @@ def format_volume(value):
         return "0"
 
 
+def format_funding(value):
+    try:
+        value = float(value) * 100
+        return f"{value:.4f}%"
+    except:
+        return "-"
+
+
 def calculate_rsi(closes, period=14):
     if len(closes) < period + 1:
         return None
@@ -129,7 +137,7 @@ class MainLayout(BoxLayout):
                 text="-",
                 font_size="18sp",
                 size_hint_y=None,
-                height=dp(52)
+                height=dp(62)
             )
             self.short_labels.append(lbl)
             self.content.add_widget(lbl)
@@ -157,7 +165,7 @@ class MainLayout(BoxLayout):
                 text="Yükleniyor...",
                 font_size="18sp",
                 size_hint_y=None,
-                height=dp(60)
+                height=dp(72)
             )
             self.movers_labels.append(lbl)
             self.content.add_widget(lbl)
@@ -232,6 +240,12 @@ class MainLayout(BoxLayout):
                     except:
                         continue
 
+                funding_val = 0.0
+                try:
+                    funding_val = float(item.get("funding_rate", 0))
+                except:
+                    funding_val = 0.0
+
                 if volume_val < MIN_VOLUME_USDT:
                     continue
 
@@ -239,7 +253,8 @@ class MainLayout(BoxLayout):
                     "contract": contract,
                     "last": last_val,
                     "change": change_val,
-                    "volume": volume_val
+                    "volume": volume_val,
+                    "funding": funding_val
                 })
 
             movers.sort(key=lambda x: x["change"], reverse=True)
@@ -253,7 +268,8 @@ class MainLayout(BoxLayout):
                             f"{i + 1}. {coin['contract']}   "
                             f"Fiyat: {format_price(coin['last'])}   "
                             f"%{coin['change']:.2f}\n"
-                            f"Hacim: {format_volume(coin['volume'])}"
+                            f"Hacim: {format_volume(coin['volume'])}   "
+                            f"Funding: {format_funding(coin['funding'])}"
                         )
                     else:
                         lbl.text = "-"
@@ -276,6 +292,7 @@ class MainLayout(BoxLayout):
                         "last": coin["last"],
                         "change": coin["change"],
                         "volume": coin["volume"],
+                        "funding": coin["funding"],
                         "rsi": rsi
                     })
 
@@ -292,7 +309,8 @@ class MainLayout(BoxLayout):
                             f"Fiyat: {format_price(coin['last'])}   "
                             f"%{coin['change']:.2f}\n"
                             f"RSI: {coin['rsi']:.1f}   "
-                            f"Hacim: {format_volume(coin['volume'])}"
+                            f"Hacim: {format_volume(coin['volume'])}   "
+                            f"Funding: {format_funding(coin['funding'])}"
                         )
                     else:
                         lbl.text = "-"
