@@ -107,7 +107,9 @@ def get_funding_color(funding):
 def get_rsi_color(rsi):
     try:
         value = float(rsi)
-        if value >= 80:
+        if value >= 85:
+            return "ff3333"
+        elif value >= 80:
             return "ff4d4d"
         elif value >= 70:
             return "ffd54a"
@@ -127,7 +129,6 @@ def parse_candle_close(candle):
             return None
 
         if isinstance(candle, (list, tuple)):
-            # Gate futures tipik sıra: [t, v, c, h, l, o, sum]
             if len(candle) >= 3:
                 return float(candle[2])
 
@@ -146,7 +147,6 @@ def parse_candle_open_close(candle):
             return None, None
 
         if isinstance(candle, (list, tuple)):
-            # Gate futures tipik sıra: [t, v, c, h, l, o, sum]
             if len(candle) >= 6:
                 open_price = float(candle[5])
                 close_price = float(candle[2])
@@ -160,7 +160,6 @@ def parse_candle_open_close(candle):
 def calculate_short_score(coin, rsi, red):
     score = 0
 
-    # RSI ağırlığı
     if rsi is not None:
         if rsi >= 90:
             score += 50
@@ -173,7 +172,6 @@ def calculate_short_score(coin, rsi, red):
         elif rsi >= 70:
             score += 10
 
-    # Funding pozitife gittikçe short daha anlamlı
     funding_pct = float(coin["f"]) * 100
     if funding_pct >= 1.0:
         score += 25
@@ -184,7 +182,6 @@ def calculate_short_score(coin, rsi, red):
     elif funding_pct <= -0.5:
         score -= 8
 
-    # Aşırı pump puanı
     change_pct = float(coin["ch"])
     if change_pct >= 200:
         score += 25
@@ -195,7 +192,6 @@ def calculate_short_score(coin, rsi, red):
     elif change_pct >= 50:
         score += 8
 
-    # Son mum kırmızıysa başlangıç ihtimali artar
     if red:
         score += 20
 
@@ -423,7 +419,6 @@ class MainLayout(BoxLayout):
                 else:
                     lbl.text = "-"
 
-            # Short radar artık top 5 tarıyor ve puanlıyor
             candidates = []
             for coin in top[:5]:
                 rsi = self.rsi_cache.get(coin["c"])
@@ -434,7 +429,6 @@ class MainLayout(BoxLayout):
 
                 score = calculate_short_score(coin, rsi, red)
 
-                # aday filtresi
                 if rsi >= 75 or score >= 45:
                     candidates.append({
                         "coin": coin,
@@ -469,9 +463,43 @@ class MainLayout(BoxLayout):
                 )
                 self.short_box.add_widget(best_lbl)
 
-                # diğer güçlü adaylar
-                extra_candidates = candidates[1:3]
-                for item in extra_candidates:
+                aggressive = []
+                for item in candidates:
+                    if item["rsi"] >= 85 or item["score"] >= 70:
+                        aggressive.append(item)
+
+                if aggressive:
+                    aggr_title = LeftLabel(
+                        text="AGRESİF ADAYLAR ⚠️",
+                        font_size="18sp",
+                        bold=True,
+                        size_hint_y=None,
+                        height=dp(34)
+                    )
+                    self.short_box.add_widget(aggr_title)
+
+                    for item in aggressive[:3]:
+                        coin = item["coin"]
+                        red_text = "Mum: Kırmızı" if item["red"] else "Mum: Nötr"
+
+                        lbl = LeftLabel(
+                            text=(
+                                f"{coin['c']} | Puan: {item['score']}\n"
+                                f"RSI: {item['rsi']:.1f} | Funding: {format_funding(coin['f'])}\n"
+                                f"Değişim: %{coin['ch']:.2f} | {red_text}"
+                            ),
+                            font_size="17sp",
+                            size_hint_y=None,
+                            height=dp(85)
+                        )
+                        self.short_box.add_widget(lbl)
+
+                others = []
+                for item in candidates[1:]:
+                    if not (item["rsi"] >= 85 or item["score"] >= 70):
+                        others.append(item)
+
+                for item in others[:2]:
                     coin = item["coin"]
                     red_text = "Mum: Kırmızı" if item["red"] else "Mum: Nötr"
 
