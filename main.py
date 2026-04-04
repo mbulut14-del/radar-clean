@@ -14,7 +14,7 @@ TICKERS_URL = "https://fx-api.gateio.ws/api/v4/futures/usdt/tickers"
 KLINE_URL = "https://fx-api.gateio.ws/api/v4/futures/usdt/candlesticks"
 
 REFRESH_TIME = 10
-RSI_REFRESH_TIME = 60
+RSI_REFRESH_TIME = 45
 MIN_VOLUME_USDT = 1_000_000
 
 
@@ -117,6 +117,46 @@ def get_rsi_color(rsi):
         return "ffffff"
 
 
+def parse_candle_close(candle):
+    try:
+        if isinstance(candle, dict):
+            if "c" in candle:
+                return float(candle["c"])
+            if "close" in candle:
+                return float(candle["close"])
+            return None
+
+        if isinstance(candle, (list, tuple)):
+            # Gate futures tipik sıra: [t, v, c, h, l, o, sum]
+            if len(candle) >= 3:
+                return float(candle[2])
+
+        return None
+    except:
+        return None
+
+
+def parse_candle_open_close(candle):
+    try:
+        if isinstance(candle, dict):
+            if "o" in candle and "c" in candle:
+                return float(candle["o"]), float(candle["c"])
+            if "open" in candle and "close" in candle:
+                return float(candle["open"]), float(candle["close"])
+            return None, None
+
+        if isinstance(candle, (list, tuple)):
+            # Gate futures tipik sıra: [t, v, c, h, l, o, sum]
+            if len(candle) >= 6:
+                open_price = float(candle[5])
+                close_price = float(candle[2])
+                return open_price, close_price
+
+        return None, None
+    except:
+        return None, None
+
+
 class LeftLabel(Label):
     def __init__(self, **kwargs):
         kwargs.setdefault("halign", "left")
@@ -133,6 +173,12 @@ class MainLayout(BoxLayout):
         super().__init__(orientation="vertical", **kwargs)
 
         Window.clearcolor = (0, 0, 0, 1)
+
+        self.session = requests.Session()
+        self.session.headers.update({
+            "Accept": "application/json",
+            "User-Agent": "Mozilla/5.0"
+        })
 
         self.update_event = None
         self.is_updating = False
@@ -208,30 +254,54 @@ class MainLayout(BoxLayout):
         Clock.schedule_once(self.update_data, 1)
         self.update_event = Clock.schedule_interval(self.update_data, REFRESH_TIME)
 
-    def get_rsi(self, contract):
+    def fetch_candles(self, contract, limit=30):
         try:
-            params = {"contract": contract, "interval": "1h", "limit": 30}
-            data = requests.get(KLINE_URL, params=params, timeout=8).json()
-            closes = [float(x[2]) for x in data]
-            return calculate_rsi(closes)
+            params = {
+                "contract": contract,
+                "interval": "1h",
+                "limit": limit
+            }
+            response = self.session.get(KLINE_URL, params=params, timeout=6)
+            data = response.json()
+
+            if isinstance(data, list):
+                return data
+
+            return []
         except:
+            return []
+
+    def get_rsi(self, contract):
+        candles = self.fetch_candles(contract, limit=30)
+        if not candles:
             return None
 
+        closes = []
+        for candle in candles:
+            close_price = parse_candle_close(candle)
+            if close_price is not None:
+                closes.append(close_price)
+
+        if len(closes) < 15:
+            return None
+
+        return calculate_rsi(closes)
+
     def is_last_candle_red(self, contract):
-        try:
-            params = {"contract": contract, "interval": "1h", "limit": 2}
-            data = requests.get(KLINE_URL, params=params, timeout=8).json()
-
-            last = data[-1]
-            open_price = float(last[1])
-            close_price = float(last[2])
-
-            return close_price < open_price
-        except:
+        candles = self.fetch_candles(contract, limit=2)
+        if not candles:
             return False
 
+        last = candles[-1]
+        open_price, close_price = parse_candle_open_close(last)
+
+        if open_price is None or close_price is None:
+            return False
+
+        return close_price < open_price
+
     def refresh_rsi_cache_if_needed(self, top_coins, now_ts):
-        if now_ts - self.rsi_last_update < RSI_REFRESH_TIME and self.rsi_cache:
+        if (now_ts - self.rsi_last_update) < RSI_REFRESH_TIME and self.rsi_cache:
             return
 
         new_cache = {}
@@ -250,7 +320,8 @@ class MainLayout(BoxLayout):
         try:
             now_ts = Clock.get_boottime()
 
-            data = requests.get(TICKERS_URL, timeout=10).json()
+            response = self.session.get(TICKERS_URL, timeout=8)
+            data = response.json()
 
             coins = []
             for item in data:
