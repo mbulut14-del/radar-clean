@@ -98,7 +98,11 @@ class MainLayout(BoxLayout):
 
         self.update_event = None
 
-        self.scroll = ScrollView(size_hint=(1, 1))
+        self.scroll = ScrollView(
+            size_hint=(1, 1),
+            do_scroll_x=False,
+            do_scroll_y=True
+        )
         self.add_widget(self.scroll)
 
         self.content = GridLayout(
