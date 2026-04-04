@@ -83,11 +83,11 @@ def get_change_color(change):
     try:
         value = float(change)
         if value >= 50:
-            return "00ff66"   # yeşil
+            return "00ff66"
         elif value >= 0:
-            return "ffd54a"   # sarı
+            return "ffd54a"
         else:
-            return "ff4d4d"   # kırmızı
+            return "ff4d4d"
     except:
         return "ffffff"
 
@@ -96,9 +96,9 @@ def get_funding_color(funding):
     try:
         value = float(funding)
         if value < 0:
-            return "ff4d4d"   # kırmızı
+            return "ff4d4d"
         else:
-            return "00ff66"   # yeşil
+            return "00ff66"
     except:
         return "ffffff"
 
@@ -125,14 +125,16 @@ class MainLayout(BoxLayout):
         self.scroll = ScrollView(
             size_hint=(1, 1),
             do_scroll_x=False,
-            do_scroll_y=True
+            do_scroll_y=True,
+            scroll_type=["content", "bars"],
+            bar_width=dp(6)
         )
         self.add_widget(self.scroll)
 
         self.content = GridLayout(
             cols=1,
             spacing=dp(12),
-            padding=dp(16),
+            padding=[dp(16), dp(16), dp(16), dp(40)],
             size_hint_y=None
         )
         self.content.bind(minimum_height=self.content.setter("height"))
@@ -217,6 +219,12 @@ class MainLayout(BoxLayout):
         except:
             return False
 
+    def refresh_layout_heights(self):
+        self.short_box.height = self.short_box.minimum_height
+        self.content.height = self.content.minimum_height
+        self.short_box.do_layout()
+        self.content.do_layout()
+
     def update_data(self, dt):
         try:
             data = requests.get(TICKERS_URL, timeout=10).json()
@@ -290,17 +298,19 @@ class MainLayout(BoxLayout):
                         height=dp(70)
                     )
                     self.short_box.add_widget(lbl)
-
             else:
                 self.short_status_label.text = "Şu an short başlangıcı yok"
 
             self.footer_label.text = f"Son güncelleme: {datetime.now().strftime('%H:%M:%S')}"
+
+            Clock.schedule_once(lambda _dt: self.refresh_layout_heights(), 0)
 
         except:
             self.short_status_label.text = "Veri çekme hatası"
             self.short_box.clear_widgets()
             for lbl in self.movers_labels:
                 lbl.text = "HATA"
+            Clock.schedule_once(lambda _dt: self.refresh_layout_heights(), 0)
 
 
 class MyApp(App):
