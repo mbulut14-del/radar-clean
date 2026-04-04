@@ -103,6 +103,35 @@ def get_funding_color(funding):
         return "ffffff"
 
 
+class TouchScrollView(ScrollView):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.do_scroll_x = False
+        self.do_scroll_y = True
+        self.scroll_type = ["content"]
+        self.bar_width = dp(0)
+        self.scroll_distance = dp(8)
+        self.scroll_timeout = 250
+
+    def on_touch_down(self, touch):
+        if self.collide_point(*touch.pos):
+            result = super().on_touch_down(touch)
+            return True if result is None else result
+        return super().on_touch_down(touch)
+
+    def on_touch_move(self, touch):
+        if self.collide_point(*touch.pos):
+            result = super().on_touch_move(touch)
+            return True if result is None else result
+        return super().on_touch_move(touch)
+
+    def on_touch_up(self, touch):
+        if self.collide_point(*touch.pos):
+            result = super().on_touch_up(touch)
+            return True if result is None else result
+        return super().on_touch_up(touch)
+
+
 class LeftLabel(Label):
     def __init__(self, **kwargs):
         kwargs.setdefault("halign", "left")
@@ -122,13 +151,7 @@ class MainLayout(BoxLayout):
 
         self.update_event = None
 
-        self.scroll = ScrollView(
-            size_hint=(1, 1),
-            do_scroll_x=False,
-            do_scroll_y=True,
-            scroll_type=["content", "bars"],
-            bar_width=dp(6)
-        )
+        self.scroll = TouchScrollView(size_hint=(1, 1))
         self.add_widget(self.scroll)
 
         self.content = GridLayout(
