@@ -79,6 +79,30 @@ def calculate_rsi(closes, period=14):
     return 100 - (100 / (1 + rs))
 
 
+def get_change_color(change):
+    try:
+        value = float(change)
+        if value >= 50:
+            return "00ff66"   # yeşil
+        elif value >= 0:
+            return "ffd54a"   # sarı
+        else:
+            return "ff4d4d"   # kırmızı
+    except:
+        return "ffffff"
+
+
+def get_funding_color(funding):
+    try:
+        value = float(funding)
+        if value < 0:
+            return "ff4d4d"   # kırmızı
+        else:
+            return "00ff66"   # yeşil
+    except:
+        return "ffffff"
+
+
 class LeftLabel(Label):
     def __init__(self, **kwargs):
         kwargs.setdefault("halign", "left")
@@ -154,7 +178,8 @@ class MainLayout(BoxLayout):
                 text="Yükleniyor...",
                 font_size="18sp",
                 size_hint_y=None,
-                height=dp(130)
+                height=dp(150),
+                markup=True
             )
             self.movers_labels.append(lbl)
             self.content.add_widget(lbl)
@@ -227,12 +252,15 @@ class MainLayout(BoxLayout):
             for i, lbl in enumerate(self.movers_labels):
                 if i < len(top):
                     coin = top[i]
+                    change_color = get_change_color(coin["ch"])
+                    funding_color = get_funding_color(coin["f"])
+
                     lbl.text = (
-                        f"{i+1}. {coin['c']}\n"
-                        f"Fiyat: {format_price(coin['p'])}\n"
-                        f"Değişim: %{coin['ch']:.2f}\n"
-                        f"Hacim: {format_volume(coin['v'])}\n"
-                        f"Funding: {format_funding(coin['f'])}"
+                        f"[b][color=ffffff]{i+1}. {coin['c']}[/color][/b]\n"
+                        f"[color=cccccc]Fiyat: {format_price(coin['p'])}[/color]\n"
+                        f"[color={change_color}]Değişim: %{coin['ch']:.2f}[/color]\n"
+                        f"[color=cccccc]Hacim: {format_volume(coin['v'])}[/color]\n"
+                        f"[color={funding_color}]Funding: {format_funding(coin['f'])}[/color]"
                     )
                 else:
                     lbl.text = "-"
