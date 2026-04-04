@@ -97,15 +97,8 @@ class MainLayout(BoxLayout):
         Window.clearcolor = (0, 0, 0, 1)
 
         self.update_event = None
-        self.is_updating = False
 
-        self.scroll = ScrollView(
-            size_hint=(1, 1),
-            do_scroll_x=False,
-            do_scroll_y=True,
-            bar_width=dp(6),
-            scroll_type=["bars", "content"]
-        )
+        self.scroll = ScrollView(size_hint=(1, 1))
         self.add_widget(self.scroll)
 
         self.content = GridLayout(
@@ -173,17 +166,13 @@ class MainLayout(BoxLayout):
         )
         self.content.add_widget(self.footer_label)
 
-        Clock.schedule_once(self.first_load, 0.5)
+        Clock.schedule_once(self.update_data, 1)
         self.update_event = Clock.schedule_interval(self.update_data, REFRESH_TIME)
-
-    def first_load(self, dt):
-        self.update_data(0)
 
     def get_rsi(self, contract):
         try:
             params = {"contract": contract, "interval": "1h", "limit": 30}
-            response = requests.get(KLINE_URL, params=params, timeout=8)
-            data = response.json()
+            data = requests.get(KLINE_URL, params=params, timeout=8).json()
             closes = [float(x[2]) for x in data]
             return calculate_rsi(closes)
         except:
@@ -192,8 +181,7 @@ class MainLayout(BoxLayout):
     def is_last_candle_red(self, contract):
         try:
             params = {"contract": contract, "interval": "1h", "limit": 2}
-            response = requests.get(KLINE_URL, params=params, timeout=8)
-            data = response.json()
+            data = requests.get(KLINE_URL, params=params, timeout=8).json()
 
             last = data[-1]
             open_price = float(last[1])
@@ -204,14 +192,8 @@ class MainLayout(BoxLayout):
             return False
 
     def update_data(self, dt):
-        if self.is_updating:
-            return
-
-        self.is_updating = True
-
         try:
-            response = requests.get(TICKERS_URL, timeout=10)
-            data = response.json()
+            data = requests.get(TICKERS_URL, timeout=10).json()
 
             coins = []
             for item in data:
@@ -256,7 +238,7 @@ class MainLayout(BoxLayout):
                 rsi = self.get_rsi(coin["c"])
                 red = self.is_last_candle_red(coin["c"])
 
-                if rsi is not None and rsi >= 80 and red:
+                if rsi and rsi >= 80 and red:
                     shorts.append((coin, rsi))
 
             if shorts:
@@ -275,19 +257,12 @@ class MainLayout(BoxLayout):
                 for lbl in self.short_labels:
                     lbl.text = "-"
 
-            self.footer_label.text = f"Son güncelleme: {datetime.now().strftime('%H:%M:%S')}"
+            self.footer_label.text = datetime.now().strftime("%H:%M:%S")
 
-            self.content.do_layout()
-            self.scroll.do_layout()
-
-        except Exception:
+        except:
             self.short_status_label.text = "Veri çekme hatası"
             for lbl in self.movers_labels:
                 lbl.text = "HATA"
-            self.footer_label.text = f"Son güncelleme: {datetime.now().strftime('%H:%M:%S')}"
-
-        finally:
-            self.is_updating = False
 
 
 class MyApp(App):
