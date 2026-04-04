@@ -157,7 +157,7 @@ class MainLayout(BoxLayout):
                 text="Yükleniyor...",
                 font_size="18sp",
                 size_hint_y=None,
-                height=dp(72)
+                height=dp(130)
             )
             self.movers_labels.append(lbl)
             self.content.add_widget(lbl)
@@ -231,8 +231,11 @@ class MainLayout(BoxLayout):
                 if i < len(top):
                     coin = top[i]
                     lbl.text = (
-                        f"{i+1}. {coin['c']}  {format_price(coin['p'])}  %{coin['ch']:.2f}\n"
-                        f"Hacim: {format_volume(coin['v'])}  Funding: {format_funding(coin['f'])}"
+                        f"{i+1}. {coin['c']}\n"
+                        f"Fiyat: {format_price(coin['p'])}\n"
+                        f"Değişim: %{coin['ch']:.2f}\n"
+                        f"Hacim: {format_volume(coin['v'])}\n"
+                        f"Funding: {format_funding(coin['f'])}"
                     )
                 else:
                     lbl.text = "-"
@@ -251,7 +254,8 @@ class MainLayout(BoxLayout):
                     if i < len(shorts):
                         coin, rsi = shorts[i]
                         lbl.text = (
-                            f"{coin['c']}  RSI:{rsi:.1f}\n"
+                            f"{coin['c']}\n"
+                            f"RSI: {rsi:.1f}\n"
                             f"Funding: {format_funding(coin['f'])}"
                         )
                     else:
@@ -261,7 +265,7 @@ class MainLayout(BoxLayout):
                 for lbl in self.short_labels:
                     lbl.text = "-"
 
-            self.footer_label.text = datetime.now().strftime("%H:%M:%S")
+            self.footer_label.text = f"Son güncelleme: {datetime.now().strftime('%H:%M:%S')}"
 
         except:
             self.short_status_label.text = "Veri çekme hatası"
