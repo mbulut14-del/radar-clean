@@ -15,8 +15,6 @@ KLINE_URL = "https://fx-api.gateio.ws/api/v4/futures/usdt/candlesticks"
 
 REFRESH_TIME = 10
 MIN_VOLUME_USDT = 1_000_000
-MAX_MOVERS = 10
-MAX_SHORT_SCAN = 5
 
 
 def format_price(value):
@@ -98,7 +96,6 @@ class MainLayout(BoxLayout):
 
         Window.clearcolor = (0, 0, 0, 1)
 
-        self.session = requests.Session()
         self.update_event = None
         self.is_updating = False
 
@@ -158,7 +155,7 @@ class MainLayout(BoxLayout):
         self.content.add_widget(self.movers_title_label)
 
         self.movers_labels = []
-        for _ in range(MAX_MOVERS):
+        for _ in range(10):
             lbl = LeftLabel(
                 text="Yükleniyor...",
                 font_size="18sp",
@@ -176,30 +173,17 @@ class MainLayout(BoxLayout):
         )
         self.content.add_widget(self.footer_label)
 
-        Clock.schedule_once(self.first_load, 0.3)
+        Clock.schedule_once(self.first_load, 0.5)
         self.update_event = Clock.schedule_interval(self.update_data, REFRESH_TIME)
 
     def first_load(self, dt):
-        self.short_status_label.text = "Veriler yükleniyor..."
-        self.footer_label.text = "Son güncelleme: yükleniyor..."
         self.update_data(0)
-
-    def on_parent(self, *args):
-        Clock.schedule_once(lambda dt: self.scroll.scroll_y.__class__, 0)
 
     def get_rsi(self, contract):
         try:
-            params = {
-                "contract": contract,
-                "interval": "1h",
-                "limit": 30
-            }
-            response = self.session.get(KLINE_URL, params=params, timeout=6)
+            params = {"contract": contract, "interval": "1h", "limit": 30}
+            response = requests.get(KLINE_URL, params=params, timeout=8)
             data = response.json()
-
-            if not isinstance(data, list) or len(data) < 15:
-                return None
-
             closes = [float(x[2]) for x in data]
             return calculate_rsi(closes)
         except:
@@ -207,16 +191,9 @@ class MainLayout(BoxLayout):
 
     def is_last_candle_red(self, contract):
         try:
-            params = {
-                "contract": contract,
-                "interval": "1h",
-                "limit": 2
-            }
-            response = self.session.get(KLINE_URL, params=params, timeout=6)
+            params = {"contract": contract, "interval": "1h", "limit": 2}
+            response = requests.get(KLINE_URL, params=params, timeout=8)
             data = response.json()
-
-            if not isinstance(data, list) or len(data) < 1:
-                return False
 
             last = data[-1]
             open_price = float(last[1])
@@ -226,29 +203,6 @@ class MainLayout(BoxLayout):
         except:
             return False
 
-    def scan_short_candidates(self, top_coins):
-        shorts = []
-
-        # Önce daha mantıklı adayları tara:
-        # güçlü yükseliş + pozitif funding öncelikli
-        candidates = sorted(
-            top_coins[:MAX_SHORT_SCAN],
-            key=lambda x: (x["ch"], x["f"]),
-            reverse=True
-        )
-
-        for coin in candidates:
-            rsi = self.get_rsi(coin["c"])
-            red = self.is_last_candle_red(coin["c"])
-
-            if rsi is not None and rsi >= 80 and red:
-                shorts.append((coin, rsi))
-
-            if len(shorts) >= 3:
-                break
-
-        return shorts
-
     def update_data(self, dt):
         if self.is_updating:
             return
@@ -256,7 +210,7 @@ class MainLayout(BoxLayout):
         self.is_updating = True
 
         try:
-            response = self.session.get(TICKERS_URL, timeout=8)
+            response = requests.get(TICKERS_URL, timeout=10)
             data = response.json()
 
             coins = []
@@ -285,19 +239,25 @@ class MainLayout(BoxLayout):
                 })
 
             coins.sort(key=lambda x: x["ch"], reverse=True)
-            top = coins[:MAX_MOVERS]
+            top = coins[:10]
 
             for i, lbl in enumerate(self.movers_labels):
                 if i < len(top):
                     coin = top[i]
                     lbl.text = (
-                        f"{i + 1}. {coin['c']}  {format_price(coin['p'])}  %{coin['ch']:.2f}\n"
+                        f"{i+1}. {coin['c']}  {format_price(coin['p'])}  %{coin['ch']:.2f}\n"
                         f"Hacim: {format_volume(coin['v'])}  Funding: {format_funding(coin['f'])}"
                     )
                 else:
                     lbl.text = "-"
 
-            shorts = self.scan_short_candidates(top)
+            shorts = []
+            for coin in top[:3]:
+                rsi = self.get_rsi(coin["c"])
+                red = self.is_last_candle_red(coin["c"])
+
+                if rsi is not None and rsi >= 80 and red:
+                    shorts.append((coin, rsi))
 
             if shorts:
                 self.short_status_label.text = f"{len(shorts)} SHORT BAŞLANGICI 🔥"
@@ -305,7 +265,7 @@ class MainLayout(BoxLayout):
                     if i < len(shorts):
                         coin, rsi = shorts[i]
                         lbl.text = (
-                            f"{coin['c']}  RSI: {rsi:.1f}\n"
+                            f"{coin['c']}  RSI:{rsi:.1f}\n"
                             f"Funding: {format_funding(coin['f'])}"
                         )
                     else:
@@ -317,11 +277,10 @@ class MainLayout(BoxLayout):
 
             self.footer_label.text = f"Son güncelleme: {datetime.now().strftime('%H:%M:%S')}"
 
-            # içerik boyu güncellensin, scroll düzgün çalışsın
             self.content.do_layout()
             self.scroll.do_layout()
 
-        except:
+        except Exception:
             self.short_status_label.text = "Veri çekme hatası"
             for lbl in self.movers_labels:
                 lbl.text = "HATA"
