@@ -1,3 +1,4 @@
+import threading
 import requests
 from datetime import datetime
 
@@ -131,7 +132,6 @@ def parse_candle_close(candle):
             return None
 
         if isinstance(candle, (list, tuple)):
-            # Gate futures tipik sıra: [t, v, c, h, l, o, sum]
             if len(candle) >= 3:
                 return float(candle[2])
 
@@ -549,10 +549,7 @@ class DetailScreen(Screen):
         rsi = app.rsi_cache.get(coin_name)
         red = app.red_cache.get(coin_name, False)
 
-        if red:
-            mum_text = "Evet"
-        else:
-            mum_text = "Hayır"
+        mum_text = "Evet" if red else "Hayır"
 
         if rsi is None:
             rsi_text = "-"
@@ -577,8 +574,7 @@ class DetailScreen(Screen):
             f"[color=cccccc]Kırmızı Mum:[/color] [color=ffffff]{mum_text}[/color]"
         )
 
-        analysis_text = build_mini_analysis(coin, rsi, red, score)
-        self.analysis_label.text = analysis_text
+        self.analysis_label.text = build_mini_analysis(coin, rsi, red, score)
 
 
 class RadarApp(App):
@@ -592,6 +588,7 @@ class RadarApp(App):
         })
 
         self.is_updating = False
+        self.worker_running = False
         self.rsi_cache = {}
         self.red_cache = {}
         self.rsi_last_update = 0
@@ -607,8 +604,8 @@ class RadarApp(App):
         self.sm.add_widget(self.main_screen)
         self.sm.add_widget(self.detail_screen)
 
-        Clock.schedule_once(self.update_data, 1)
-        Clock.schedule_interval(self.update_data, REFRESH_TIME)
+        Clock.schedule_once(lambda dt: self.request_update(), 1)
+        Clock.schedule_interval(lambda dt: self.request_update(), REFRESH_TIME)
 
         return self.sm
 
@@ -660,7 +657,7 @@ class RadarApp(App):
 
     def refresh_rsi_cache_if_needed(self, top_coins, now_ts):
         if (now_ts - self.rsi_last_update) < RSI_REFRESH_TIME and self.rsi_cache:
-            return
+            return self.rsi_cache, self.red_cache, self.rsi_last_update
 
         new_rsi_cache = {}
         new_red_cache = {}
@@ -670,16 +667,16 @@ class RadarApp(App):
             new_rsi_cache[contract] = self.get_rsi(contract)
             new_red_cache[contract] = self.is_last_candle_red(contract)
 
-        self.rsi_cache = new_rsi_cache
-        self.red_cache = new_red_cache
-        self.rsi_last_update = now_ts
+        return new_rsi_cache, new_red_cache, now_ts
 
-    def update_data(self, dt):
-        if self.is_updating:
+    def request_update(self):
+        if self.worker_running:
             return
 
-        self.is_updating = True
+        self.worker_running = True
+        threading.Thread(target=self.update_data_worker, daemon=True).start()
 
+    def update_data_worker(self):
         try:
             now_ts = Clock.get_boottime()
 
@@ -712,15 +709,15 @@ class RadarApp(App):
                 })
 
             coins.sort(key=lambda x: x["ch"], reverse=True)
-            self.top_coins = coins[:10]
-            self.coin_map = {coin["c"]: coin for coin in self.top_coins}
+            top_coins = coins[:10]
+            coin_map = {coin["c"]: coin for coin in top_coins}
 
-            self.refresh_rsi_cache_if_needed(self.top_coins, now_ts)
+            rsi_cache, red_cache, rsi_last_update = self.refresh_rsi_cache_if_needed(top_coins, now_ts)
 
             candidates = []
-            for coin in self.top_coins[:5]:
-                rsi = self.rsi_cache.get(coin["c"])
-                red = self.red_cache.get(coin["c"], False)
+            for coin in top_coins[:5]:
+                rsi = rsi_cache.get(coin["c"])
+                red = red_cache.get(coin["c"], False)
 
                 if rsi is None:
                     continue
@@ -736,18 +733,35 @@ class RadarApp(App):
                     })
 
             candidates.sort(key=lambda x: x["score"], reverse=True)
-            self.short_candidates = candidates
 
-            self.main_screen.update_ui()
+            Clock.schedule_once(
+                lambda dt: self.apply_update(
+                    top_coins, coin_map, rsi_cache, red_cache, rsi_last_update, candidates
+                ),
+                0
+            )
 
-            if self.sm.current == "detail" and self.selected_coin:
-                self.detail_screen.load_coin(self.selected_coin)
+        except Exception:
+            Clock.schedule_once(lambda dt: self.apply_error(), 0)
 
-        except:
-            self.main_screen.short_status_label.text = "Veri çekme hatası"
+    def apply_update(self, top_coins, coin_map, rsi_cache, red_cache, rsi_last_update, candidates):
+        self.top_coins = top_coins
+        self.coin_map = coin_map
+        self.rsi_cache = rsi_cache
+        self.red_cache = red_cache
+        self.rsi_last_update = rsi_last_update
+        self.short_candidates = candidates
 
-        finally:
-            self.is_updating = False
+        self.main_screen.update_ui()
+
+        if self.sm.current == "detail" and self.selected_coin:
+            self.detail_screen.load_coin(self.selected_coin)
+
+        self.worker_running = False
+
+    def apply_error(self):
+        self.main_screen.short_status_label.text = "Veri çekme hatası"
+        self.worker_running = False
 
 
 RadarApp().run()
