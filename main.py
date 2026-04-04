@@ -98,11 +98,7 @@ class MainLayout(BoxLayout):
 
         self.update_event = None
 
-        self.scroll = ScrollView(
-            size_hint=(1, 1),
-            do_scroll_x=False,
-            do_scroll_y=True
-        )
+        self.scroll = ScrollView(size_hint=(1, 1))
         self.add_widget(self.scroll)
 
         self.content = GridLayout(
@@ -151,14 +147,6 @@ class MainLayout(BoxLayout):
         )
         self.content.add_widget(self.movers_title_label)
 
-        self.filter_info_label = LeftLabel(
-            text=f"Filtre: Hacim >= {format_volume(MIN_VOLUME_USDT)}",
-            font_size="16sp",
-            size_hint_y=None,
-            height=dp(30)
-        )
-        self.content.add_widget(self.filter_info_label)
-
         self.movers_labels = []
         for _ in range(10):
             lbl = LeftLabel(
@@ -181,193 +169,105 @@ class MainLayout(BoxLayout):
         Clock.schedule_once(self.update_data, 1)
         self.update_event = Clock.schedule_interval(self.update_data, REFRESH_TIME)
 
-    def stop_updates(self):
-        if self.update_event is not None:
-            self.update_event.cancel()
-            self.update_event = None
-
     def get_rsi(self, contract):
         try:
-            params = {
-                "contract": contract,
-                "interval": "1h",
-                "limit": 30
-            }
-            res = requests.get(KLINE_URL, params=params, timeout=8)
-            res.raise_for_status()
-            data = res.json()
-
-            closes = []
-            for candle in data:
-                try:
-                    closes.append(float(candle[2]))
-                except:
-                    continue
-
-            if not closes:
-                return None
-
+            params = {"contract": contract, "interval": "1h", "limit": 30}
+            data = requests.get(KLINE_URL, params=params, timeout=8).json()
+            closes = [float(x[2]) for x in data]
             return calculate_rsi(closes)
         except:
             return None
 
+    def is_last_candle_red(self, contract):
+        try:
+            params = {"contract": contract, "interval": "1h", "limit": 2}
+            data = requests.get(KLINE_URL, params=params, timeout=8).json()
+
+            last = data[-1]
+            open_price = float(last[1])
+            close_price = float(last[2])
+
+            return close_price < open_price
+        except:
+            return False
+
     def update_data(self, dt):
         try:
-            response = requests.get(TICKERS_URL, timeout=10)
-            response.raise_for_status()
-            data = response.json()
+            data = requests.get(TICKERS_URL, timeout=10).json()
 
-            movers = []
+            coins = []
             for item in data:
-                contract = item.get("contract", "")
-                if not contract.endswith("_USDT"):
+                c = item.get("contract", "")
+                if not c.endswith("_USDT"):
                     continue
 
                 try:
-                    change_val = float(item.get("change_percentage", 0))
-                    last_val = float(item.get("last", 0))
+                    price = float(item["last"])
+                    change = float(item["change_percentage"])
+                    volume = float(item.get("volume_24h_quote", 0))
+                    funding = float(item.get("funding_rate", 0))
                 except:
                     continue
 
-                volume_val = 0.0
-                for key in ["volume_24h_quote", "volume_24h_settle", "volume_24h"]:
-                    try:
-                        raw = item.get(key, 0)
-                        if raw is not None:
-                            volume_val = float(raw)
-                            if volume_val > 0:
-                                break
-                    except:
-                        continue
-
-                funding_val = 0.0
-                try:
-                    funding_val = float(item.get("funding_rate", 0))
-                except:
-                    funding_val = 0.0
-
-                if volume_val < MIN_VOLUME_USDT:
+                if volume < MIN_VOLUME_USDT:
                     continue
 
-                movers.append({
-                    "contract": contract,
-                    "last": last_val,
-                    "change": change_val,
-                    "volume": volume_val,
-                    "funding": funding_val
+                coins.append({
+                    "c": c,
+                    "p": price,
+                    "ch": change,
+                    "v": volume,
+                    "f": funding
                 })
 
-            movers.sort(key=lambda x: x["change"], reverse=True)
-            top_10 = movers[:10]
+            coins.sort(key=lambda x: x["ch"], reverse=True)
+            top = coins[:10]
 
-            if top_10:
-                for i, lbl in enumerate(self.movers_labels):
-                    if i < len(top_10):
-                        coin = top_10[i]
-                        lbl.text = (
-                            f"{i + 1}. {coin['contract']}   "
-                            f"Fiyat: {format_price(coin['last'])}   "
-                            f"%{coin['change']:.2f}\n"
-                            f"Hacim: {format_volume(coin['volume'])}   "
-                            f"Funding: {format_funding(coin['funding'])}"
-                        )
-                    else:
-                        lbl.text = "-"
-            else:
-                self.movers_labels[0].text = "Filtreye uyan coin bulunamadı"
-                for lbl in self.movers_labels[1:]:
+            for i, lbl in enumerate(self.movers_labels):
+                if i < len(top):
+                    coin = top[i]
+                    lbl.text = (
+                        f"{i+1}. {coin['c']}  {format_price(coin['p'])}  %{coin['ch']:.2f}\n"
+                        f"Hacim: {format_volume(coin['v'])}  Funding: {format_funding(coin['f'])}"
+                    )
+                else:
                     lbl.text = "-"
 
-            short_candidates = []
-            scan_list = movers[:3]
+            shorts = []
+            for coin in top[:3]:
+                rsi = self.get_rsi(coin["c"])
+                red = self.is_last_candle_red(coin["c"])
 
-            for coin in scan_list:
-                rsi = self.get_rsi(coin["contract"])
-                if rsi is None:
-                    continue
+                if rsi and rsi >= 80 and red:
+                    shorts.append((coin, rsi))
 
-                if rsi >= 80:
-                    short_candidates.append({
-                        "contract": coin["contract"],
-                        "last": coin["last"],
-                        "change": coin["change"],
-                        "volume": coin["volume"],
-                        "funding": coin["funding"],
-                        "rsi": rsi
-                    })
-
-                if len(short_candidates) >= 3:
-                    break
-
-            if short_candidates:
-                self.short_status_label.text = f"{len(short_candidates)} short adayı bulundu"
+            if shorts:
+                self.short_status_label.text = f"{len(shorts)} SHORT BAŞLANGICI 🔥"
                 for i, lbl in enumerate(self.short_labels):
-                    if i < len(short_candidates):
-                        coin = short_candidates[i]
+                    if i < len(shorts):
+                        coin, rsi = shorts[i]
                         lbl.text = (
-                            f"{i + 1}. {coin['contract']}   "
-                            f"Fiyat: {format_price(coin['last'])}   "
-                            f"%{coin['change']:.2f}\n"
-                            f"RSI: {coin['rsi']:.1f}   "
-                            f"Hacim: {format_volume(coin['volume'])}   "
-                            f"Funding: {format_funding(coin['funding'])}"
+                            f"{coin['c']}  RSI:{rsi:.1f}\n"
+                            f"Funding: {format_funding(coin['f'])}"
                         )
                     else:
                         lbl.text = "-"
             else:
-                self.short_status_label.text = "Şu an short adayı yok"
+                self.short_status_label.text = "Şu an short başlangıcı yok"
                 for lbl in self.short_labels:
                     lbl.text = "-"
 
-            self.footer_label.text = (
-                f"Son güncelleme: {datetime.now().strftime('%H:%M:%S')}   "
-                f"Yenileme: {REFRESH_TIME} sn"
-            )
+            self.footer_label.text = datetime.now().strftime("%H:%M:%S")
 
-        except Exception as e:
+        except:
             self.short_status_label.text = "Veri çekme hatası"
-            for lbl in self.short_labels:
-                lbl.text = "HATA"
             for lbl in self.movers_labels:
                 lbl.text = "HATA"
-            self.footer_label.text = f"Son hata: {str(e)}"
 
 
 class MyApp(App):
     def build(self):
-        self.root_layout = MainLayout()
-        Window.bind(on_keyboard=self.on_back_button)
-        return self.root_layout
-
-    def rebuild_ui(self):
-        try:
-            if hasattr(self, "root_layout") and self.root_layout:
-                self.root_layout.stop_updates()
-        except:
-            pass
-
-        new_layout = MainLayout()
-
-        try:
-            self.root.clear_widgets()
-            self.root.add_widget(new_layout)
-            self.root_layout = new_layout
-        except:
-            self.root_layout = new_layout
-            return new_layout
-
-    def on_pause(self):
-        return True
-
-    def on_resume(self):
-        Clock.schedule_once(lambda dt: self.rebuild_ui(), 0.2)
-        return True
-
-    def on_back_button(self, window, key, *args):
-        if key == 27:
-            self.stop()
-            return True
-        return False
+        return MainLayout()
 
 
 MyApp().run()
