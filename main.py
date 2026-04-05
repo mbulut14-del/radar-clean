@@ -24,39 +24,60 @@ KV = """
 
 <ClickCard>:
     size_hint_y: None
-    height: dp(104)
+    height: dp(108)
     padding: dp(12)
-    spacing: dp(12)
+    spacing: dp(14)
 
     canvas.before:
         Color:
-            rgba: 0.07, 0.16, 0.35, 1
+            rgba: 0.10, 0.08, 0.14, 1
         RoundedRectangle:
             pos: self.pos
             size: self.size
-            radius: [18, 18, 18, 18]
+            radius: [22, 22, 22, 22]
+
+        Color:
+            rgba: root.glow_r, root.glow_g, root.glow_b, 0.10
+        RoundedRectangle:
+            pos: self.x - dp(2), self.y - dp(2)
+            size: self.width + dp(4), self.height + dp(4)
+            radius: [24, 24, 24, 24]
+
+        Color:
+            rgba: 0.30, 0.22, 0.30, 0.55
+        Line:
+            width: 1.15
+            rounded_rectangle: (self.x, self.y, self.width, self.height, dp(22))
+
+        Color:
+            rgba: root.glow_r, root.glow_g, root.glow_b, 0.18
+        Line:
+            width: 1.05
+            rounded_rectangle: (self.x + dp(1), self.y + dp(1), self.width - dp(2), self.height - dp(2), dp(21))
 
     BoxLayout:
         size_hint_x: None
-        width: dp(64)
-        padding: dp(8)
+        width: dp(62)
+        padding: dp(6)
 
         canvas.before:
             Color:
-                rgba: 0.15, 0.65, 1.0, 0.25
+                rgba: 0.10, 0.60, 1.0, 0.13
             Ellipse:
-                pos: self.x - dp(6), self.y - dp(6)
-                size: self.width + dp(12), self.height + dp(12)
+                pos: self.x - dp(5), self.y - dp(5)
+                size: self.width + dp(10), self.height + dp(10)
+
             Color:
-                rgba: 0.15, 0.65, 1.0, 1
+                rgba: 0.14, 0.63, 1.0, 1
             Ellipse:
                 pos: self.pos
                 size: self.size
+
             Color:
                 rgba: 0.05, 0.05, 0.10, 1
             Ellipse:
-                pos: self.x + dp(8), self.y + dp(8)
-                size: self.width - dp(16), self.height - dp(16)
+                pos: self.x + dp(7), self.y + dp(7)
+                size: self.width - dp(14), self.height - dp(14)
 
         Label:
             text: root.rank_text
@@ -72,7 +93,7 @@ KV = """
             text: root.coin_text
             font_size: "20sp"
             bold: True
-            color: 1, 0.35, 0.35, 1
+            color: 1, 0.38, 0.38, 1
             size_hint_y: None
             height: dp(34)
             halign: "left"
@@ -83,7 +104,7 @@ KV = """
             text: root.change_text
             font_size: "18sp"
             bold: True
-            color: 0.18, 0.95, 0.65, 1
+            color: 0.20, 0.98, 0.66, 1
             size_hint_y: None
             height: dp(28)
             halign: "left"
@@ -92,25 +113,33 @@ KV = """
 
     BoxLayout:
         size_hint_x: None
-        width: dp(88)
-        padding: dp(6)
+        width: dp(92)
+        padding: dp(5)
 
         canvas.before:
             Color:
-                rgba: root.glow_r, root.glow_g, root.glow_b, 0.22
+                rgba: root.glow_r, root.glow_g, root.glow_b, 0.10
             Ellipse:
                 pos: self.x - dp(8), self.y - dp(8)
                 size: self.width + dp(16), self.height + dp(16)
+
+            Color:
+                rgba: root.glow_r, root.glow_g, root.glow_b, 0.22
+            Ellipse:
+                pos: self.x - dp(3), self.y - dp(3)
+                size: self.width + dp(6), self.height + dp(6)
+
             Color:
                 rgba: root.glow_r, root.glow_g, root.glow_b, 1
             Ellipse:
                 pos: self.pos
                 size: self.size
+
             Color:
                 rgba: 0.05, 0.05, 0.10, 1
             Ellipse:
-                pos: self.x + dp(12), self.y + dp(12)
-                size: self.width - dp(24), self.height - dp(24)
+                pos: self.x + dp(10), self.y + dp(10)
+                size: self.width - dp(20), self.height - dp(20)
 
         Label:
             text: root.score_text
@@ -122,123 +151,205 @@ KV = """
 <MainScreen>:
     name: "main"
 
-    BoxLayout:
-        orientation: "vertical"
-        padding: dp(14)
-        spacing: dp(14)
+    ScrollView:
+        do_scroll_x: False
 
-        Label:
-            text: "SHORT RADAR"
-            font_size: "24sp"
-            bold: True
-            color: 1, 1, 1, 1
-            size_hint_y: None
-            height: dp(42)
-            halign: "left"
-            valign: "middle"
-            text_size: self.size
-
-        Label:
-            text: "EN GUCLU SHORT ADAYI"
-            font_size: "20sp"
-            bold: True
-            color: 1, 1, 1, 1
-            size_hint_y: None
-            height: dp(34)
-            halign: "left"
-            valign: "middle"
-            text_size: self.size
-
-        BoxLayout:
-            size_hint_y: None
-            height: dp(220)
-            padding: dp(16)
+        GridLayout:
+            cols: 1
+            padding: dp(14)
             spacing: dp(14)
+            size_hint_y: None
+            height: self.minimum_height
 
             canvas.before:
                 Color:
-                    rgba: 0.75, 0.14, 0.14, 1
-                RoundedRectangle:
+                    rgba: 0, 0, 0, 1
+                Rectangle:
                     pos: self.pos
                     size: self.size
-                    radius: [22, 22, 22, 22]
+
+            Label:
+                text: "SHORT RADAR"
+                font_size: "25sp"
+                bold: True
+                color: 1, 1, 1, 1
+                size_hint_y: None
+                height: dp(42)
+                halign: "left"
+                valign: "middle"
+                text_size: self.size
+
+            Label:
+                text: "EN GUCLU SHORT ADAYI"
+                font_size: "21sp"
+                bold: True
+                color: 1, 1, 1, 1
+                size_hint_y: None
+                height: dp(34)
+                halign: "left"
+                valign: "middle"
+                text_size: self.size
 
             BoxLayout:
-                size_hint_x: None
-                width: dp(130)
-                padding: dp(8)
+                size_hint_y: None
+                height: dp(248)
+                padding: dp(16)
+                spacing: dp(16)
 
                 canvas.before:
                     Color:
-                        rgba: root.hero_glow_r, root.hero_glow_g, root.hero_glow_b, 0.28
-                    Ellipse:
-                        pos: self.x - dp(10), self.y - dp(10)
-                        size: self.width + dp(20), self.height + dp(20)
+                        rgba: 1.0, 0.32, 0.12, 0.09
+                    RoundedRectangle:
+                        pos: self.x - dp(8), self.y - dp(8)
+                        size: self.width + dp(16), self.height + dp(16)
+                        radius: [28, 28, 28, 28]
+
                     Color:
-                        rgba: root.hero_glow_r, root.hero_glow_g, root.hero_glow_b, 1
-                    Ellipse:
+                        rgba: 1.0, 0.28, 0.10, 0.16
+                    RoundedRectangle:
+                        pos: self.x - dp(3), self.y - dp(3)
+                        size: self.width + dp(6), self.height + dp(6)
+                        radius: [26, 26, 26, 26]
+
+                    Color:
+                        rgba: 0.18, 0.05, 0.07, 1
+                    RoundedRectangle:
                         pos: self.pos
                         size: self.size
+                        radius: [24, 24, 24, 24]
+
                     Color:
-                        rgba: 0.05, 0.05, 0.10, 1
+                        rgba: 0.52, 0.08, 0.08, 0.75
+                    RoundedRectangle:
+                        pos: self.x + dp(6), self.y + dp(6)
+                        size: self.width - dp(12), self.height - dp(12)
+                        radius: [22, 22, 22, 22]
+
+                    Color:
+                        rgba: 1.0, 0.30, 0.08, 0.92
+                    Line:
+                        width: 1.3
+                        rounded_rectangle: (self.x + dp(1), self.y + dp(1), self.width - dp(2), self.height - dp(2), dp(24))
+
+                    Color:
+                        rgba: 1.0, 0.64, 0.14, 0.75
+                    Line:
+                        width: 1.0
+                        rounded_rectangle: (self.x + dp(7), self.y + dp(7), self.width - dp(14), self.height - dp(14), dp(21))
+
+                    Color:
+                        rgba: 1, 1, 1, 0.05
+                    Line:
+                        width: 1
+                        points: self.x + dp(22), self.top - dp(56), self.right - dp(22), self.top - dp(56)
+
+                    Color:
+                        rgba: 1.0, 0.55, 0.20, 0.14
                     Ellipse:
-                        pos: self.x + dp(14), self.y + dp(14)
-                        size: self.width - dp(28), self.height - dp(28)
+                        pos: self.right - dp(170), self.top - dp(155)
+                        size: dp(185), dp(185)
 
-                Label:
-                    text: root.hero_score
-                    bold: True
-                    font_size: "24sp"
-                    color: 1, 1, 1, 1
+                    Color:
+                        rgba: 1.0, 0.20, 0.10, 0.10
+                    Ellipse:
+                        pos: self.x + dp(10), self.y - dp(35)
+                        size: dp(280), dp(180)
 
-            BoxLayout:
-                orientation: "vertical"
-                spacing: dp(4)
+                BoxLayout:
+                    size_hint_x: None
+                    width: dp(116)
+                    padding: dp(6)
 
-                Label:
-                    text: "EN GUCLU SHORT\\nADAYI"
-                    font_size: "17sp"
-                    bold: True
-                    color: 1, 1, 1, 1
-                    size_hint_y: None
-                    height: dp(54)
-                    halign: "left"
-                    valign: "middle"
-                    text_size: self.size
+                    canvas.before:
+                        Color:
+                            rgba: root.hero_glow_r, root.hero_glow_g, root.hero_glow_b, 0.12
+                        Ellipse:
+                            pos: self.x - dp(16), self.y - dp(16)
+                            size: self.width + dp(32), self.height + dp(32)
 
-                Label:
-                    text: root.hero_coin
-                    font_size: "28sp"
-                    bold: True
-                    color: 1, 1, 1, 1
-                    size_hint_y: None
-                    height: dp(42)
-                    halign: "left"
-                    valign: "middle"
-                    text_size: self.size
+                        Color:
+                            rgba: root.hero_glow_r, root.hero_glow_g, root.hero_glow_b, 0.20
+                        Ellipse:
+                            pos: self.x - dp(7), self.y - dp(7)
+                            size: self.width + dp(14), self.height + dp(14)
 
-                Label:
-                    text: root.hero_info
-                    markup: True
-                    font_size: "16sp"
-                    color: 1, 1, 1, 1
-                    halign: "left"
-                    valign: "top"
-                    text_size: self.width, None
+                        Color:
+                            rgba: root.hero_glow_r, root.hero_glow_g, root.hero_glow_b, 1
+                        Ellipse:
+                            pos: self.pos
+                            size: self.size
 
-        Label:
-            text: "Gate.io Vadeli En Cok Yukselenler"
-            font_size: "20sp"
-            bold: True
-            color: 1, 1, 1, 1
-            size_hint_y: None
-            height: dp(36)
-            halign: "left"
-            valign: "middle"
-            text_size: self.size
+                        Color:
+                            rgba: 0.36, 0.10, 0.08, 0.42
+                        Ellipse:
+                            pos: self.x + dp(6), self.y + dp(6)
+                            size: self.width - dp(12), self.height - dp(12)
 
-        ScrollView:
-            do_scroll_x: False
+                        Color:
+                            rgba: 0.05, 0.05, 0.10, 1
+                        Ellipse:
+                            pos: self.x + dp(16), self.y + dp(16)
+                            size: self.width - dp(32), self.height - dp(32)
+
+                        Color:
+                            rgba: 1, 1, 1, 0.08
+                        Line:
+                            width: 1
+                            ellipse: (self.x + dp(7), self.y + dp(7), self.width - dp(14), self.height - dp(14))
+
+                    Label:
+                        text: root.hero_score
+                        bold: True
+                        font_size: "24sp"
+                        color: 1, 1, 1, 1
+
+                BoxLayout:
+                    orientation: "vertical"
+                    spacing: dp(5)
+
+                    Label:
+                        text: "EN GUCLU SHORT\\nADAYI"
+                        font_size: "17sp"
+                        bold: True
+                        color: 1, 1, 1, 1
+                        size_hint_y: None
+                        height: dp(52)
+                        halign: "left"
+                        valign: "middle"
+                        text_size: self.size
+
+                    Label:
+                        text: root.hero_coin
+                        font_size: "29sp"
+                        bold: True
+                        color: 1, 1, 1, 1
+                        size_hint_y: None
+                        height: dp(46)
+                        halign: "left"
+                        valign: "middle"
+                        text_size: self.size
+
+                    Label:
+                        text: root.hero_info
+                        markup: True
+                        font_size: "16sp"
+                        color: 1, 1, 1, 1
+                        halign: "left"
+                        valign: "top"
+                        text_size: self.width, None
+                        size_hint_y: None
+                        height: self.texture_size[1]
+
+            Label:
+                text: "Gate.io Vadeli En Cok Yukselenler"
+                font_size: "21sp"
+                bold: True
+                color: 1, 1, 1, 1
+                size_hint_y: None
+                height: dp(38)
+                halign: "left"
+                valign: "middle"
+                text_size: self.size
 
             GridLayout:
                 id: coin_list
@@ -391,7 +502,7 @@ def format_price(value):
         elif value >= 1:
             return f"{value:,.4f}"
         return f"{value:.8f}".rstrip("0").rstrip(".")
-    except:
+    except Exception:
         return str(value)
 
 
@@ -405,14 +516,14 @@ def format_volume(value):
         elif value >= 1_000:
             return f"{value / 1_000:.2f}K"
         return f"{value:.2f}"
-    except:
+    except Exception:
         return "0"
 
 
 def format_funding(value):
     try:
         return f"{float(value) * 100:.4f}%"
-    except:
+    except Exception:
         return "-"
 
 
@@ -451,7 +562,7 @@ def parse_candle_close(candle):
                 return float(candle["close"])
         elif isinstance(candle, (list, tuple)) and len(candle) >= 3:
             return float(candle[2])
-    except:
+    except Exception:
         pass
     return None
 
@@ -465,7 +576,7 @@ def parse_candle_open_close(candle):
                 return float(candle["open"]), float(candle["close"])
         elif isinstance(candle, (list, tuple)) and len(candle) >= 6:
             return float(candle[5]), float(candle[2])
-    except:
+    except Exception:
         pass
     return None, None
 
@@ -516,12 +627,12 @@ def build_mini_analysis(coin, rsi, red, score):
 
     try:
         change_pct = float(coin["ch"])
-    except:
+    except Exception:
         change_pct = 0.0
 
     try:
         funding_pct = float(coin["f"]) * 100
-    except:
+    except Exception:
         funding_pct = 0.0
 
     if rsi is None:
@@ -570,7 +681,7 @@ def build_mini_analysis(coin, rsi, red, score):
     else:
         notes.append("Su an icin net short teyidi zayif.")
 
-    return "\n".join(notes)
+    return "\\n".join(notes)
 
 
 class ClickCard(ButtonBehavior, BoxLayout):
@@ -656,7 +767,7 @@ class RadarKVApp(App):
             data = response.json()
             if isinstance(data, list):
                 return data
-        except:
+        except Exception:
             pass
         return []
 
@@ -725,7 +836,7 @@ class RadarKVApp(App):
                     change = float(item["change_percentage"])
                     volume = float(item.get("volume_24h_quote", 0))
                     funding = float(item.get("funding_rate", 0))
-                except:
+                except Exception:
                     continue
 
                 if volume < MIN_VOLUME_USDT:
@@ -772,7 +883,7 @@ class RadarKVApp(App):
                 0
             )
 
-        except:
+        except Exception:
             Clock.schedule_once(lambda dt: self.apply_error(), 0)
 
     def apply_update(self, top_coins, coin_map, rsi_cache, red_cache, rsi_last_update, candidates):
@@ -812,12 +923,12 @@ class RadarKVApp(App):
             main.hero_glow_g = g
             main.hero_glow_b = b
             main.hero_info = (
-                f"[color=ffffff]Puan:[/color] [color=ffb347]{best['score']}[/color]\n"
-                f"[color=ffffff]RSI:[/color] [color=ff8888]{best['rsi']:.1f}[/color]\n"
-                f"[color=ffffff]Funding:[/color] [color=ffffff]{format_funding(best_coin['f'])}[/color]\n"
-                f"[color=ffffff]Degisim:[/color] [color=00ff88]%{best_coin['ch']:.2f}[/color]\n"
+                f"[color=ffffff]Puan:[/color] [color=ffb347]{best['score']}[/color]\\n"
+                f"[color=ffffff]RSI:[/color] [color=ff8888]{best['rsi']:.1f}[/color]\\n"
+                f"[color=ffffff]Funding:[/color] [color=ffffff]{format_funding(best_coin['f'])}[/color]\\n"
+                f"[color=ffffff]Degisim:[/color] [color=00ff88]%{best_coin['ch']:.2f}[/color]\\n"
                 f"[color=ffffff]Kirmizi mum:[/color] [color=ffffff]{red_text}[/color]"
-            )
+            ).replace("\\n", "\n")
         else:
             main.hero_coin = "Sinyal yok"
             main.hero_score = "0"
@@ -883,16 +994,16 @@ class RadarKVApp(App):
         detail.glow_b = b
 
         detail.info_text = (
-            f"[color=cccccc]Fiyat:[/color] [color=ffffff]{format_price(coin['p'])}[/color]\n"
-            f"[color=cccccc]Degisim:[/color] [color=00ff88]%{coin['ch']:.2f}[/color]\n"
-            f"[color=cccccc]Hacim:[/color] [color=ffffff]{format_volume(coin['v'])}[/color]\n"
-            f"[color=cccccc]Funding:[/color] [color=ffffff]{format_funding(coin['f'])}[/color]\n"
-            f"[color=cccccc]RSI (1s):[/color] [color=ffffff]{rsi_text}[/color]\n"
-            f"[color=cccccc]Short Puani:[/color] [color=ffffff]{score}[/color]\n"
+            f"[color=cccccc]Fiyat:[/color] [color=ffffff]{format_price(coin['p'])}[/color]\\n"
+            f"[color=cccccc]Degisim:[/color] [color=00ff88]%{coin['ch']:.2f}[/color]\\n"
+            f"[color=cccccc]Hacim:[/color] [color=ffffff]{format_volume(coin['v'])}[/color]\\n"
+            f"[color=cccccc]Funding:[/color] [color=ffffff]{format_funding(coin['f'])}[/color]\\n"
+            f"[color=cccccc]RSI (1s):[/color] [color=ffffff]{rsi_text}[/color]\\n"
+            f"[color=cccccc]Short Puani:[/color] [color=ffffff]{score}[/color]\\n"
             f"[color=cccccc]Kirmizi Mum:[/color] [color=ffffff]{mum_text}[/color]"
-        )
+        ).replace("\\n", "\n")
 
-        detail.analysis_text = build_mini_analysis(coin, rsi, red, score)
+        detail.analysis_text = build_mini_analysis(coin, rsi, red, score).replace("\\n", "\n")
 
     def back_to_main(self):
         self.sm.current = "main"
