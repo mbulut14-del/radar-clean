@@ -8,7 +8,7 @@ from kivy.core.window import Window
 from kivy.properties import StringProperty, NumericProperty, DictProperty
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.behaviors import ButtonBehavior
-from kivy.uix.screenmanager import ScreenManager, Screen
+from kivy.uix.screenmanager import Screen, ScreenManager
 
 
 TICKERS_URL = "https://fx-api.gateio.ws/api/v4/futures/usdt/tickers"
@@ -390,8 +390,7 @@ def format_price(value):
             return f"{value:,.2f}"
         elif value >= 1:
             return f"{value:,.4f}"
-        else:
-            return f"{value:.8f}".rstrip("0").rstrip(".")
+        return f"{value:.8f}".rstrip("0").rstrip(".")
     except:
         return str(value)
 
@@ -405,16 +404,14 @@ def format_volume(value):
             return f"{value / 1_000_000:.2f}M"
         elif value >= 1_000:
             return f"{value / 1_000:.2f}K"
-        else:
-            return f"{value:.2f}"
+        return f"{value:.2f}"
     except:
         return "0"
 
 
 def format_funding(value):
     try:
-        value = float(value) * 100
-        return f"{value:.4f}%"
+        return f"{float(value) * 100:.4f}%"
     except:
         return "-"
 
@@ -573,7 +570,7 @@ def build_mini_analysis(coin, rsi, red, score):
     else:
         notes.append("Su an icin net short teyidi zayif.")
 
-    return "\\n".join(notes)
+    return "\n".join(notes)
 
 
 class ClickCard(ButtonBehavior, BoxLayout):
@@ -708,7 +705,6 @@ class RadarKVApp(App):
     def request_update(self):
         if self.worker_running:
             return
-
         self.worker_running = True
         threading.Thread(target=self.update_data_worker, daemon=True).start()
 
@@ -816,10 +812,10 @@ class RadarKVApp(App):
             main.hero_glow_g = g
             main.hero_glow_b = b
             main.hero_info = (
-                f"[color=ffffff]Puan:[/color] [color=ffb347]{best['score']}[/color]\\n"
-                f"[color=ffffff]RSI:[/color] [color=ff8888]{best['rsi']:.1f}[/color]\\n"
-                f"[color=ffffff]Funding:[/color] [color=ffffff]{format_funding(best_coin['f'])}[/color]\\n"
-                f"[color=ffffff]Degisim:[/color] [color=00ff88]%{best_coin['ch']:.2f}[/color]\\n"
+                f"[color=ffffff]Puan:[/color] [color=ffb347]{best['score']}[/color]\n"
+                f"[color=ffffff]RSI:[/color] [color=ff8888]{best['rsi']:.1f}[/color]\n"
+                f"[color=ffffff]Funding:[/color] [color=ffffff]{format_funding(best_coin['f'])}[/color]\n"
+                f"[color=ffffff]Degisim:[/color] [color=00ff88]%{best_coin['ch']:.2f}[/color]\n"
                 f"[color=ffffff]Kirmizi mum:[/color] [color=ffffff]{red_text}[/color]"
             )
         else:
@@ -837,6 +833,7 @@ class RadarKVApp(App):
             score = calculate_short_score(coin, rsi, red) if rsi is not None else 0
 
             r, g, b = self.get_glow(score)
+
             card = ClickCard()
             card.coin_data = coin
             card.rank_text = str(i + 1)
@@ -884,15 +881,17 @@ class RadarKVApp(App):
         detail.glow_r = r
         detail.glow_g = g
         detail.glow_b = b
+
         detail.info_text = (
-            f"[color=cccccc]Fiyat:[/color] [color=ffffff]{format_price(coin['p'])}[/color]\\n"
-            f"[color=cccccc]Degisim:[/color] [color=00ff88]%{coin['ch']:.2f}[/color]\\n"
-            f"[color=cccccc]Hacim:[/color] [color=ffffff]{format_volume(coin['v'])}[/color]\\n"
-            f"[color=cccccc]Funding:[/color] [color=ffffff]{format_funding(coin['f'])}[/color]\\n"
-            f"[color=cccccc]RSI (1s):[/color] [color=ffffff]{rsi_text}[/color]\\n"
-            f"[color=cccccc]Short Puani:[/color] [color=ffffff]{score}[/color]\\n"
+            f"[color=cccccc]Fiyat:[/color] [color=ffffff]{format_price(coin['p'])}[/color]\n"
+            f"[color=cccccc]Degisim:[/color] [color=00ff88]%{coin['ch']:.2f}[/color]\n"
+            f"[color=cccccc]Hacim:[/color] [color=ffffff]{format_volume(coin['v'])}[/color]\n"
+            f"[color=cccccc]Funding:[/color] [color=ffffff]{format_funding(coin['f'])}[/color]\n"
+            f"[color=cccccc]RSI (1s):[/color] [color=ffffff]{rsi_text}[/color]\n"
+            f"[color=cccccc]Short Puani:[/color] [color=ffffff]{score}[/color]\n"
             f"[color=cccccc]Kirmizi Mum:[/color] [color=ffffff]{mum_text}[/color]"
         )
+
         detail.analysis_text = build_mini_analysis(coin, rsi, red, score)
 
     def back_to_main(self):
