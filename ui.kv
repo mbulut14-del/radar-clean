@@ -1,4 +1,3 @@
-
 #:kivy 2.1.0
 
 <MainScreen>:
@@ -25,41 +24,77 @@
                 height: dp(32)
 
             BoxLayout:
-                id: hero_card
                 orientation: "horizontal"
                 size_hint_y: None
-                height: dp(180)
+                height: dp(200)
                 padding: dp(16)
                 spacing: dp(12)
 
                 canvas.before:
                     Color:
-                        rgba: 0.9, 0.15, 0.15, 1
+                        rgba: 0.15, 0.02, 0.02, 1
                     RoundedRectangle:
                         pos: self.pos
                         size: self.size
-                        radius: [20]
+                        radius: [22]
 
-                Label:
-                    id: hero_score
-                    text: "0"
+                    Color:
+                        rgba: 1, 0.2, 0.2, 0.25
+                    RoundedRectangle:
+                        pos: self.x - 4, self.y - 4
+                        size: self.width + 8, self.height + 8
+                        radius: [26]
+
+                    Color:
+                        rgba: 1, 0.3, 0.3, 0.12
+                    Ellipse:
+                        pos: self.right - dp(180), self.top - dp(120)
+                        size: dp(220), dp(140)
+
+                FloatLayout:
                     size_hint_x: None
-                    width: dp(90)
-                    font_size: "26sp"
-                    bold: True
+                    width: dp(130)
+
+                    canvas:
+                        Color:
+                            rgba: 1, 0.3, 0.3, 1
+                        Line:
+                            circle: self.center_x, self.center_y, 52
+                            width: 8
+
+                        Color:
+                            rgba: 0.2, 1, 0.7, 1
+                        Line:
+                            circle: self.center_x, self.center_y, 42
+                            width: 6
+
+                    Label:
+                        id: hero_score
+                        text: "0"
+                        font_size: "26sp"
+                        bold: True
+                        center: self.parent.center
 
                 BoxLayout:
                     orientation: "vertical"
 
                     Label:
+                        text: "EN GÜÇLÜ SHORT ADAYI"
+                        font_size: "14sp"
+                        bold: True
+                        size_hint_y: None
+                        height: dp(24)
+
+                    Label:
                         id: hero_coin
                         text: "..."
-                        font_size: "24sp"
+                        font_size: "28sp"
                         bold: True
 
                     Label:
                         id: hero_info
                         text: ""
+                        font_size: "14sp"
                         markup: True
 
             Label:
