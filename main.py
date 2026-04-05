@@ -11,7 +11,6 @@ from kivy.uix.gridlayout import GridLayout
 from kivy.uix.label import Label
 from kivy.uix.scrollview import ScrollView
 from kivy.uix.button import Button
-from kivy.uix.image import AsyncImage
 from kivy.uix.screenmanager import ScreenManager, Screen
 
 TICKERS_URL = "https://fx-api.gateio.ws/api/v4/futures/usdt/tickers"
@@ -292,54 +291,6 @@ class CoinButton(Button):
 
     def _update_text_size(self, *args):
         self.text_size = (self.width - dp(20), None)
-
-
-class SplashScreen(Screen):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
-
-        root = BoxLayout(
-            orientation="vertical",
-            padding=dp(24),
-            spacing=dp(16)
-        )
-        self.add_widget(root)
-
-        root.add_widget(Label(size_hint_y=0.12))
-
-        self.logo = AsyncImage(
-            source="logo.png",
-            size_hint=(1, 0.42),
-            fit_mode="contain"
-        )
-        root.add_widget(self.logo)
-
-        self.title_label = Label(
-            text="SHORT RADAR PRO",
-            font_size="28sp",
-            bold=True,
-            color=(1, 1, 1, 1),
-            size_hint_y=None,
-            height=dp(50)
-        )
-        root.add_widget(self.title_label)
-
-        self.tagline_label = Label(
-            text="Futures Short Scanner",
-            font_size="16sp",
-            color=(0.7, 0.7, 0.7, 1),
-            size_hint_y=None,
-            height=dp(34)
-        )
-        root.add_widget(self.tagline_label)
-
-        root.add_widget(Label(size_hint_y=0.42))
-
-    def on_enter(self, *args):
-        Clock.schedule_once(self.go_main, 3)
-
-    def go_main(self, dt):
-        App.get_running_app().sm.current = "main"
 
 
 class MainScreen(Screen):
@@ -647,15 +598,13 @@ class RadarApp(App):
         self.selected_coin = None
 
         self.sm = ScreenManager()
-        self.splash_screen = SplashScreen(name="splash")
         self.main_screen = MainScreen(name="main")
         self.detail_screen = DetailScreen(name="detail")
 
-        self.sm.add_widget(self.splash_screen)
         self.sm.add_widget(self.main_screen)
         self.sm.add_widget(self.detail_screen)
 
-        self.sm.current = "splash"
+        self.sm.current = "main"
 
         Clock.schedule_once(lambda dt: self.request_update(), 0.2)
         Clock.schedule_interval(lambda dt: self.request_update(), REFRESH_TIME)
