@@ -837,7 +837,7 @@ class DetailScreen(Screen):
 
 class RadarApp(App):
     def build(self):
-        Builder.load_file("ui.kv")
+
         Window.clearcolor = (0, 0, 0, 1)
 
         self.session = requests.Session()
