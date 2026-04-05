@@ -282,19 +282,44 @@ class CardButton(ButtonBehavior, BoxLayout):
     def __init__(self, **kwargs):
         kwargs.setdefault("orientation", "vertical")
         kwargs.setdefault("size_hint_y", None)
-        kwargs.setdefault("height", dp(92))
+        kwargs.setdefault("height", dp(98))
+        kwargs.setdefault("padding", [dp(10), dp(6), dp(10), dp(6)])
         super().__init__(**kwargs)
 
         from kivy.graphics import Color, RoundedRectangle
         with self.canvas.before:
-            Color(0.07, 0.07, 0.10, 1)
-            self.bg_rect = RoundedRectangle(pos=self.pos, size=self.size, radius=[18])
+            Color(0.11, 0.12, 0.17, 0.35)
+            self.glow_rect = RoundedRectangle(
+                pos=(self.x - 2, self.y - 2),
+                size=(self.width + 4, self.height + 4),
+                radius=[22]
+            )
+
+            Color(0.05, 0.06, 0.10, 1)
+            self.bg_rect = RoundedRectangle(
+                pos=self.pos,
+                size=self.size,
+                radius=[18]
+            )
+
+            Color(0.14, 0.16, 0.24, 0.9)
+            self.inner_border = RoundedRectangle(
+                pos=(self.x + 1, self.y + 1),
+                size=(self.width - 2, self.height - 2),
+                radius=[18]
+            )
 
         self.bind(pos=self._update_bg, size=self._update_bg)
 
     def _update_bg(self, *args):
+        self.glow_rect.pos = (self.x - 2, self.y - 2)
+        self.glow_rect.size = (self.width + 4, self.height + 4)
+
         self.bg_rect.pos = self.pos
         self.bg_rect.size = self.size
+
+        self.inner_border.pos = (self.x + 1, self.y + 1)
+        self.inner_border.size = (max(0, self.width - 2), max(0, self.height - 2))
 
 
 class MainScreen(Screen):
@@ -383,7 +408,7 @@ class MainScreen(Screen):
 
             row = BoxLayout(
                 orientation="horizontal",
-                padding=[dp(14), dp(10), dp(14), dp(10)],
+                padding=[dp(16), dp(10), dp(16), dp(10)],
                 spacing=dp(12)
             )
 
@@ -407,14 +432,14 @@ class MainScreen(Screen):
                 text="Yükleniyor...",
                 font_size="20sp",
                 bold=True,
-                color=(1, 1, 1, 1)
+                color=(1, 0.35, 0.35, 1)
             )
             coin_wrap.add_widget(coin_label)
 
             right_wrap = BoxLayout(
                 orientation="vertical",
                 size_hint_x=None,
-                width=dp(110)
+                width=dp(120)
             )
             right_badge = Label(
                 text="-",
