@@ -125,6 +125,19 @@ def get_rsi_color(rsi):
         return "ffffff"
 
 
+def get_score_circle_rgba(score):
+    try:
+        value = int(score)
+        if value >= 70:
+            return (1.0, 0.28, 0.28, 1)
+        elif value >= 50:
+            return (1.0, 0.66, 0.22, 1)
+        else:
+            return (0.18, 0.78, 0.45, 1)
+    except:
+        return (0.35, 0.35, 0.35, 1)
+
+
 def parse_candle_close(candle):
     try:
         if isinstance(candle, dict):
@@ -278,6 +291,49 @@ class LeftLabel(Label):
         self.text_size = (self.width, None)
 
 
+class ScoreCircle(BoxLayout):
+    def __init__(self, **kwargs):
+        kwargs.setdefault("size_hint", (None, None))
+        kwargs.setdefault("width", dp(54))
+        kwargs.setdefault("height", dp(54))
+        super().__init__(**kwargs)
+
+        from kivy.graphics import Color, Ellipse
+        with self.canvas.before:
+            self.circle_color = Color(*get_score_circle_rgba(0))
+            self.circle_bg = Ellipse(pos=self.pos, size=self.size)
+
+        self.label = Label(
+            text="0",
+            color=(1, 1, 1, 1),
+            bold=True,
+            font_size="17sp",
+            halign="center",
+            valign="middle"
+        )
+        self.add_widget(self.label)
+
+        self.bind(pos=self._update_circle, size=self._update_circle)
+        self.label.bind(size=self._update_label_text_size)
+
+    def _update_circle(self, *args):
+        self.circle_bg.pos = self.pos
+        self.circle_bg.size = self.size
+        self.label.pos = self.pos
+        self.label.size = self.size
+
+    def _update_label_text_size(self, *args):
+        self.label.text_size = self.label.size
+
+    def set_score(self, score):
+        try:
+            value = int(score)
+        except:
+            value = 0
+        self.label.text = str(value)
+        self.circle_color.rgba = get_score_circle_rgba(value)
+
+
 class CardButton(ButtonBehavior, BoxLayout):
     def __init__(self, **kwargs):
         kwargs.setdefault("orientation", "vertical")
@@ -341,45 +397,10 @@ class MainScreen(Screen):
             size_hint_y=None,
             height=dp(215)
         )
-
         with self.hero_card.canvas.before:
             from kivy.graphics import Color, RoundedRectangle
-
-            Color(1, 0.20, 0.20, 0.14)
-            self.hero_glow_outer = RoundedRectangle(
-                pos=(self.hero_card.x - dp(8), self.hero_card.y - dp(8)),
-                size=(self.hero_card.width + dp(16), self.hero_card.height + dp(16)),
-                radius=[28]
-            )
-
-            Color(1, 0.28, 0.18, 0.22)
-            self.hero_glow_mid = RoundedRectangle(
-                pos=(self.hero_card.x - dp(4), self.hero_card.y - dp(4)),
-                size=(self.hero_card.width + dp(8), self.hero_card.height + dp(8)),
-                radius=[25]
-            )
-
-            Color(0.20, 0.03, 0.04, 1)
-            self.hero_bg = RoundedRectangle(
-                pos=self.hero_card.pos,
-                size=self.hero_card.size,
-                radius=[22]
-            )
-
-            Color(1, 0.30, 0.24, 0.95)
-            self.hero_border = RoundedRectangle(
-                pos=self.hero_card.pos,
-                size=self.hero_card.size,
-                radius=[22]
-            )
-
-            Color(0.55, 0.06, 0.08, 0.55)
-            self.hero_inner = RoundedRectangle(
-                pos=(self.hero_card.x + dp(3), self.hero_card.y + dp(3)),
-                size=(self.hero_card.width - dp(6), self.hero_card.height - dp(6)),
-                radius=[20]
-            )
-
+            Color(1, 0.22, 0.22, 0.95)
+            self.hero_bg = RoundedRectangle(pos=self.hero_card.pos, size=self.hero_card.size, radius=[22])
         self.hero_card.bind(pos=self._update_hero_rect, size=self._update_hero_rect)
 
         self.hero_coin = LeftLabel(
@@ -442,23 +463,18 @@ class MainScreen(Screen):
                 text="Yükleniyor...",
                 font_size="20sp",
                 bold=True,
-                color=(1, 1, 1, 1)
+                color=(1, 0.35, 0.35, 1)
             )
             coin_wrap.add_widget(coin_label)
 
             right_wrap = BoxLayout(
                 orientation="vertical",
                 size_hint_x=None,
-                width=dp(110)
+                width=dp(70),
+                padding=[0, dp(4), 0, dp(4)]
             )
-            right_badge = Label(
-                text="-",
-                markup=True,
-                font_size="18sp",
-                bold=True,
-                color=(1, 1, 1, 1)
-            )
-            right_wrap.add_widget(right_badge)
+            score_circle = ScoreCircle()
+            right_wrap.add_widget(score_circle)
 
             row.add_widget(rank_wrap)
             row.add_widget(coin_wrap)
@@ -468,7 +484,7 @@ class MainScreen(Screen):
 
             card.rank_label = rank_label
             card.coin_label = coin_label
-            card.right_badge = right_badge
+            card.score_circle = score_circle
 
             self.coin_cards.append(card)
             self.content.add_widget(card)
@@ -483,20 +499,8 @@ class MainScreen(Screen):
         self.content.add_widget(self.footer_label)
 
     def _update_hero_rect(self, *args):
-        self.hero_glow_outer.pos = (self.hero_card.x - dp(8), self.hero_card.y - dp(8))
-        self.hero_glow_outer.size = (self.hero_card.width + dp(16), self.hero_card.height + dp(16))
-
-        self.hero_glow_mid.pos = (self.hero_card.x - dp(4), self.hero_card.y - dp(4))
-        self.hero_glow_mid.size = (self.hero_card.width + dp(8), self.hero_card.height + dp(8))
-
         self.hero_bg.pos = self.hero_card.pos
         self.hero_bg.size = self.hero_card.size
-
-        self.hero_border.pos = self.hero_card.pos
-        self.hero_border.size = self.hero_card.size
-
-        self.hero_inner.pos = (self.hero_card.x + dp(3), self.hero_card.y + dp(3))
-        self.hero_inner.size = (max(0, self.hero_card.width - dp(6)), max(0, self.hero_card.height - dp(6)))
 
     def open_detail(self, button):
         app = App.get_running_app()
@@ -549,21 +553,14 @@ class MainScreen(Screen):
                 else:
                     score = 0
 
-                if i < 2:
-                    badge_text = f"[color=00ff88][b]+{coin['ch']:.2f}%[/b][/color]"
-                elif score >= 50:
-                    badge_text = f"[color=ffb347][b]{score} >[/b][/color]"
-                else:
-                    badge_text = f"[color=00ff88][b]+{coin['ch']:.2f}%[/b][/color]"
-
-                card.right_badge.text = badge_text
+                card.score_circle.set_score(score)
             else:
                 card.coin_name = None
                 card.disabled = True
                 card.opacity = 0.5
                 card.rank_label.text = "-"
                 card.coin_label.text = "-"
-                card.right_badge.text = "-"
+                card.score_circle.set_score(0)
 
         app_time = datetime.now().strftime("%H:%M:%S")
         self.footer_label.text = f"Son güncelleme: {app_time} | RSI yenileme: {RSI_REFRESH_TIME}s"
