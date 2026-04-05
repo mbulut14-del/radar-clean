@@ -14,6 +14,7 @@ from kivy.uix.button import Button
 from kivy.uix.behaviors import ButtonBehavior
 from kivy.uix.screenmanager import ScreenManager, Screen
 
+
 TICKERS_URL = "https://fx-api.gateio.ws/api/v4/futures/usdt/tickers"
 KLINE_URL = "https://fx-api.gateio.ws/api/v4/futures/usdt/candlesticks"
 
@@ -129,11 +130,11 @@ def get_score_circle_rgba(score):
     try:
         value = int(score)
         if value >= 70:
-            return (1.0, 0.28, 0.28, 1)
+            return (1.0, 0.25, 0.25, 1)
         elif value >= 50:
-            return (1.0, 0.66, 0.22, 1)
+            return (1.0, 0.66, 0.20, 1)
         else:
-            return (0.18, 0.78, 0.45, 1)
+            return (0.18, 0.80, 0.45, 1)
     except:
         return (0.35, 0.35, 0.35, 1)
 
@@ -142,13 +143,13 @@ def get_score_glow_rgba(score):
     try:
         value = int(score)
         if value >= 70:
-            return (1.0, 0.28, 0.28, 0.22)
+            return (1.0, 0.25, 0.25, 0.35)
         elif value >= 50:
-            return (1.0, 0.66, 0.22, 0.20)
+            return (1.0, 0.66, 0.20, 0.32)
         else:
-            return (0.18, 0.78, 0.45, 0.18)
+            return (0.18, 0.80, 0.45, 0.28)
     except:
-        return (0.35, 0.35, 0.35, 0.12)
+        return (0.35, 0.35, 0.35, 0.20)
 
 
 def parse_candle_close(candle):
@@ -307,27 +308,39 @@ class LeftLabel(Label):
 class ScoreCircle(BoxLayout):
     def __init__(self, **kwargs):
         kwargs.setdefault("size_hint", (None, None))
-        kwargs.setdefault("width", dp(56))
-        kwargs.setdefault("height", dp(56))
+        kwargs.setdefault("width", dp(62))
+        kwargs.setdefault("height", dp(62))
         super().__init__(**kwargs)
 
         from kivy.graphics import Color, Ellipse
 
         with self.canvas.before:
-            self.glow_color = Color(*get_score_glow_rgba(0))
-            self.glow_circle = Ellipse(
-                pos=(self.x - dp(4), self.y - dp(4)),
-                size=(self.width + dp(8), self.height + dp(8))
+            self.glow_color_outer = Color(*get_score_glow_rgba(0))
+            self.glow_outer = Ellipse(
+                pos=(self.x - dp(10), self.y - dp(10)),
+                size=(self.width + dp(20), self.height + dp(20))
             )
 
-            self.circle_color = Color(*get_score_circle_rgba(0))
-            self.circle_bg = Ellipse(pos=self.pos, size=self.size)
+            self.glow_color_mid = Color(*get_score_glow_rgba(0))
+            self.glow_mid = Ellipse(
+                pos=(self.x - dp(5), self.y - dp(5)),
+                size=(self.width + dp(10), self.height + dp(10))
+            )
+
+            self.ring_color = Color(0.95, 0.95, 0.95, 0.18)
+            self.ring = Ellipse(pos=self.pos, size=self.size)
+
+            self.inner_color = Color(*get_score_circle_rgba(0))
+            self.inner = Ellipse(
+                pos=(self.x + dp(4), self.y + dp(4)),
+                size=(self.width - dp(8), self.height - dp(8))
+            )
 
         self.label = Label(
             text="0",
             color=(1, 1, 1, 1),
             bold=True,
-            font_size="17sp",
+            font_size="18sp",
             halign="center",
             valign="middle"
         )
@@ -337,10 +350,18 @@ class ScoreCircle(BoxLayout):
         self.label.bind(size=self._update_label_text_size)
 
     def _update_circle(self, *args):
-        self.glow_circle.pos = (self.x - dp(4), self.y - dp(4))
-        self.glow_circle.size = (self.width + dp(8), self.height + dp(8))
-        self.circle_bg.pos = self.pos
-        self.circle_bg.size = self.size
+        self.glow_outer.pos = (self.x - dp(10), self.y - dp(10))
+        self.glow_outer.size = (self.width + dp(20), self.height + dp(20))
+
+        self.glow_mid.pos = (self.x - dp(5), self.y - dp(5))
+        self.glow_mid.size = (self.width + dp(10), self.height + dp(10))
+
+        self.ring.pos = self.pos
+        self.ring.size = self.size
+
+        self.inner.pos = (self.x + dp(4), self.y + dp(4))
+        self.inner.size = (max(0, self.width - dp(8)), max(0, self.height - dp(8)))
+
         self.label.pos = self.pos
         self.label.size = self.size
 
@@ -352,38 +373,68 @@ class ScoreCircle(BoxLayout):
             value = int(score)
         except:
             value = 0
+
         self.label.text = str(value)
-        self.circle_color.rgba = get_score_circle_rgba(value)
-        self.glow_color.rgba = get_score_glow_rgba(value)
+        glow_rgba = get_score_glow_rgba(value)
+        inner_rgba = get_score_circle_rgba(value)
+
+        self.glow_color_outer.rgba = glow_rgba
+        self.glow_color_mid.rgba = glow_rgba
+        self.inner_color.rgba = inner_rgba
 
 
 class CardButton(ButtonBehavior, BoxLayout):
     def __init__(self, **kwargs):
         kwargs.setdefault("orientation", "vertical")
         kwargs.setdefault("size_hint_y", None)
-        kwargs.setdefault("height", dp(92))
+        kwargs.setdefault("height", dp(96))
         super().__init__(**kwargs)
 
         from kivy.graphics import Color, RoundedRectangle
 
         with self.canvas.before:
-            Color(0.18, 0.52, 0.95, 0.08)
-            self.glow_rect = RoundedRectangle(
+            Color(0.15, 0.55, 1.0, 0.16)
+            self.glow_outer = RoundedRectangle(
+                pos=(self.x - dp(6), self.y - dp(6)),
+                size=(self.width + dp(12), self.height + dp(12)),
+                radius=[24]
+            )
+
+            Color(0.12, 0.42, 1.0, 0.12)
+            self.glow_mid = RoundedRectangle(
                 pos=(self.x - dp(3), self.y - dp(3)),
                 size=(self.width + dp(6), self.height + dp(6)),
                 radius=[21]
             )
 
-            Color(0.07, 0.07, 0.10, 1)
-            self.bg_rect = RoundedRectangle(pos=self.pos, size=self.size, radius=[18])
+            Color(0.05, 0.06, 0.10, 1)
+            self.bg_rect = RoundedRectangle(
+                pos=self.pos,
+                size=self.size,
+                radius=[18]
+            )
+
+            Color(0.14, 0.45, 1.0, 0.20)
+            self.inner_border = RoundedRectangle(
+                pos=(self.x + dp(1), self.y + dp(1)),
+                size=(self.width - dp(2), self.height - dp(2)),
+                radius=[18]
+            )
 
         self.bind(pos=self._update_bg, size=self._update_bg)
 
     def _update_bg(self, *args):
-        self.glow_rect.pos = (self.x - dp(3), self.y - dp(3))
-        self.glow_rect.size = (self.width + dp(6), self.height + dp(6))
+        self.glow_outer.pos = (self.x - dp(6), self.y - dp(6))
+        self.glow_outer.size = (self.width + dp(12), self.height + dp(12))
+
+        self.glow_mid.pos = (self.x - dp(3), self.y - dp(3))
+        self.glow_mid.size = (self.width + dp(6), self.height + dp(6))
+
         self.bg_rect.pos = self.pos
         self.bg_rect.size = self.size
+
+        self.inner_border.pos = (self.x + dp(1), self.y + dp(1))
+        self.inner_border.size = (max(0, self.width - dp(2)), max(0, self.height - dp(2)))
 
 
 class MainScreen(Screen):
@@ -398,7 +449,7 @@ class MainScreen(Screen):
 
         self.content = GridLayout(
             cols=1,
-            spacing=dp(14),
+            spacing=dp(16),
             padding=[dp(14), dp(14), dp(14), dp(22)],
             size_hint_y=None
         )
@@ -431,20 +482,33 @@ class MainScreen(Screen):
             height=dp(215)
         )
 
+        from kivy.graphics import Color, RoundedRectangle
         with self.hero_card.canvas.before:
-            from kivy.graphics import Color, RoundedRectangle
-
-            Color(1, 0.25, 0.25, 0.22)
+            Color(1.0, 0.18, 0.18, 0.30)
             self.hero_glow_outer = RoundedRectangle(
-                pos=(self.hero_card.x - dp(5), self.hero_card.y - dp(5)),
-                size=(self.hero_card.width + dp(10), self.hero_card.height + dp(10)),
-                radius=[27]
+                pos=(self.hero_card.x - dp(10), self.hero_card.y - dp(10)),
+                size=(self.hero_card.width + dp(20), self.hero_card.height + dp(20)),
+                radius=[30]
             )
 
-            Color(1, 0.20, 0.20, 0.92)
+            Color(1.0, 0.20, 0.20, 0.22)
+            self.hero_glow_mid = RoundedRectangle(
+                pos=(self.hero_card.x - dp(5), self.hero_card.y - dp(5)),
+                size=(self.hero_card.width + dp(10), self.hero_card.height + dp(10)),
+                radius=[26]
+            )
+
+            Color(0.65, 0.04, 0.05, 1)
             self.hero_bg = RoundedRectangle(
                 pos=self.hero_card.pos,
                 size=self.hero_card.size,
+                radius=[22]
+            )
+
+            Color(1.0, 0.35, 0.35, 0.28)
+            self.hero_inner_border = RoundedRectangle(
+                pos=(self.hero_card.x + dp(2), self.hero_card.y + dp(2)),
+                size=(self.hero_card.width - dp(4), self.hero_card.height - dp(4)),
                 radius=[22]
             )
 
@@ -517,8 +581,8 @@ class MainScreen(Screen):
             right_wrap = BoxLayout(
                 orientation="vertical",
                 size_hint_x=None,
-                width=dp(72),
-                padding=[0, dp(2), 0, dp(2)]
+                width=dp(82),
+                padding=[0, dp(1), 0, dp(1)]
             )
             score_circle = ScoreCircle()
             right_wrap.add_widget(score_circle)
@@ -546,10 +610,17 @@ class MainScreen(Screen):
         self.content.add_widget(self.footer_label)
 
     def _update_hero_rect(self, *args):
-        self.hero_glow_outer.pos = (self.hero_card.x - dp(5), self.hero_card.y - dp(5))
-        self.hero_glow_outer.size = (self.hero_card.width + dp(10), self.hero_card.height + dp(10))
+        self.hero_glow_outer.pos = (self.hero_card.x - dp(10), self.hero_card.y - dp(10))
+        self.hero_glow_outer.size = (self.hero_card.width + dp(20), self.hero_card.height + dp(20))
+
+        self.hero_glow_mid.pos = (self.hero_card.x - dp(5), self.hero_card.y - dp(5))
+        self.hero_glow_mid.size = (self.hero_card.width + dp(10), self.hero_card.height + dp(10))
+
         self.hero_bg.pos = self.hero_card.pos
         self.hero_bg.size = self.hero_card.size
+
+        self.hero_inner_border.pos = (self.hero_card.x + dp(2), self.hero_card.y + dp(2))
+        self.hero_inner_border.size = (max(0, self.hero_card.width - dp(4)), max(0, self.hero_card.height - dp(4)))
 
     def open_detail(self, button):
         app = App.get_running_app()
@@ -743,7 +814,7 @@ class DetailScreen(Screen):
 
 class RadarApp(App):
     def build(self):
-        Window.clearcolor = (0, 0, 0, 1)
+        Window.clearcolor = (0.0, 0.0, 0.0, 1)
 
         self.session = requests.Session()
         self.session.headers.update({
