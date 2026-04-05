@@ -1,12 +1,10 @@
 import threading
 import requests
-from datetime import datetime
 
 from kivy.app import App
 from kivy.lang import Builder
 from kivy.clock import Clock
 from kivy.core.window import Window
-from kivy.metrics import dp
 from kivy.properties import StringProperty, NumericProperty, DictProperty
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.behaviors import ButtonBehavior
@@ -254,108 +252,129 @@ KV = """
 <DetailScreen>:
     name: "detail"
 
-    BoxLayout:
-        orientation: "vertical"
-        padding: dp(14)
-        spacing: dp(14)
+    ScrollView:
+        do_scroll_x: False
 
-        Button:
-            text: "< Geri"
-            size_hint_y: None
-            height: dp(46)
-            size_hint_x: None
-            width: dp(110)
-            background_normal: ""
-            background_down: ""
-            background_color: 0.15, 0.15, 0.18, 1
-            color: 1, 1, 1, 1
-            on_release: app.back_to_main()
-
-        Label:
-            text: root.coin_name
-            font_size: "28sp"
-            bold: True
-            color: 1, 1, 1, 1
-            size_hint_y: None
-            height: dp(44)
-            halign: "left"
-            valign: "middle"
-            text_size: self.size
-
-        BoxLayout:
-            size_hint_y: None
-            height: dp(220)
-            padding: dp(16)
+        GridLayout:
+            cols: 1
+            padding: dp(14)
             spacing: dp(14)
+            size_hint_y: None
+            height: self.minimum_height
 
-            canvas.before:
-                Color:
-                    rgba: 0.10, 0.10, 0.14, 1
-                RoundedRectangle:
-                    pos: self.pos
-                    size: self.size
-                    radius: [22, 22, 22, 22]
+            Label:
+                text: root.coin_name
+                font_size: "28sp"
+                bold: True
+                color: 1, 1, 1, 1
+                size_hint_y: None
+                height: dp(44)
+                halign: "left"
+                valign: "middle"
+                text_size: self.size
 
             BoxLayout:
-                size_hint_x: None
-                width: dp(130)
-                padding: dp(8)
+                size_hint_y: None
+                height: dp(230)
+                padding: dp(16)
+                spacing: dp(14)
 
                 canvas.before:
                     Color:
-                        rgba: root.glow_r, root.glow_g, root.glow_b, 0.28
-                    Ellipse:
-                        pos: self.x - dp(10), self.y - dp(10)
-                        size: self.width + dp(20), self.height + dp(20)
-                    Color:
-                        rgba: root.glow_r, root.glow_g, root.glow_b, 1
-                    Ellipse:
+                        rgba: 0.08, 0.09, 0.14, 1
+                    RoundedRectangle:
                         pos: self.pos
                         size: self.size
+                        radius: [22, 22, 22, 22]
+
+                BoxLayout:
+                    size_hint_x: None
+                    width: dp(132)
+                    padding: dp(8)
+
+                    canvas.before:
+                        Color:
+                            rgba: root.glow_r, root.glow_g, root.glow_b, 0.28
+                        Ellipse:
+                            pos: self.x - dp(10), self.y - dp(10)
+                            size: self.width + dp(20), self.height + dp(20)
+                        Color:
+                            rgba: root.glow_r, root.glow_g, root.glow_b, 1
+                        Ellipse:
+                            pos: self.pos
+                            size: self.size
+                        Color:
+                            rgba: 0.05, 0.05, 0.10, 1
+                        Ellipse:
+                            pos: self.x + dp(14), self.y + dp(14)
+                            size: self.width - dp(28), self.height - dp(28)
+
+                    Label:
+                        text: root.score_text
+                        bold: True
+                        font_size: "24sp"
+                        color: 1, 1, 1, 1
+
+                GridLayout:
+                    cols: 1
+                    spacing: dp(4)
+
+                    Label:
+                        text: "COIN DETAYI"
+                        font_size: "17sp"
+                        bold: True
+                        color: 1, 1, 1, 1
+                        size_hint_y: None
+                        height: dp(24)
+                        halign: "left"
+                        valign: "middle"
+                        text_size: self.size
+
+                    Label:
+                        text: root.info_text
+                        markup: True
+                        font_size: "17sp"
+                        color: 1, 1, 1, 1
+                        halign: "left"
+                        valign: "top"
+                        text_size: self.width, None
+                        size_hint_y: None
+                        height: self.texture_size[1]
+
+            Label:
+                text: "Mini Analiz"
+                font_size: "22sp"
+                bold: True
+                color: 1, 1, 1, 1
+                size_hint_y: None
+                height: dp(36)
+                halign: "left"
+                valign: "middle"
+                text_size: self.size
+
+            BoxLayout:
+                size_hint_y: None
+                height: max(dp(180), analysis_label.texture_size[1] + dp(32))
+                padding: dp(16)
+
+                canvas.before:
                     Color:
-                        rgba: 0.05, 0.05, 0.10, 1
-                    Ellipse:
-                        pos: self.x + dp(14), self.y + dp(14)
-                        size: self.width - dp(28), self.height - dp(28)
+                        rgba: 0.08, 0.09, 0.14, 1
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [22, 22, 22, 22]
 
                 Label:
-                    text: root.score_text
-                    bold: True
-                    font_size: "24sp"
+                    id: analysis_label
+                    text: root.analysis_text
+                    font_size: "18sp"
                     color: 1, 1, 1, 1
-
-            Label:
-                text: root.info_text
-                markup: True
-                font_size: "17sp"
-                color: 1, 1, 1, 1
-                halign: "left"
-                valign: "top"
-                text_size: self.width, None
-
-        Label:
-            text: "Mini Analiz"
-            font_size: "22sp"
-            bold: True
-            color: 1, 1, 1, 1
-            size_hint_y: None
-            height: dp(36)
-            halign: "left"
-            valign: "middle"
-            text_size: self.size
-
-        ScrollView:
-            do_scroll_x: False
-
-            Label:
-                text: root.analysis_text
-                font_size: "18sp"
-                color: 1, 1, 1, 1
-                halign: "left"
-                valign: "top"
-                text_size: self.width, None
-                size_hint_y: None
-                height: self.texture_size[1]
+                    halign: "left"
+                    valign: "top"
+                    text_size: self.width, None
+                    size_hint_y: None
+                    height: self.texture_size[1]
 
 
 ScreenManager:
@@ -554,7 +573,7 @@ def build_mini_analysis(coin, rsi, red, score):
     else:
         notes.append("Su an icin net short teyidi zayif.")
 
-    return "\n".join(notes)
+    return "\\n".join(notes)
 
 
 class ClickCard(ButtonBehavior, BoxLayout):
@@ -593,6 +612,7 @@ class DetailScreen(Screen):
 class RadarKVApp(App):
     def build(self):
         Window.clearcolor = (0, 0, 0, 1)
+        Window.bind(on_keyboard=self.on_android_back)
 
         self.session = requests.Session()
         self.session.headers.update({
@@ -616,6 +636,12 @@ class RadarKVApp(App):
         Clock.schedule_interval(lambda dt: self.request_update(), REFRESH_TIME)
 
         return self.sm
+
+    def on_android_back(self, window, key, *args):
+        if key == 27 and self.sm.current == "detail":
+            self.back_to_main()
+            return True
+        return False
 
     def get_glow(self, score):
         if score >= 35:
@@ -790,10 +816,10 @@ class RadarKVApp(App):
             main.hero_glow_g = g
             main.hero_glow_b = b
             main.hero_info = (
-                f"[color=ffffff]Puan:[/color] [color=ffb347]{best['score']}[/color]\n"
-                f"[color=ffffff]RSI:[/color] [color=ff8888]{best['rsi']:.1f}[/color]\n"
-                f"[color=ffffff]Funding:[/color] [color=ffffff]{format_funding(best_coin['f'])}[/color]\n"
-                f"[color=ffffff]Degisim:[/color] [color=00ff88]%{best_coin['ch']:.2f}[/color]\n"
+                f"[color=ffffff]Puan:[/color] [color=ffb347]{best['score']}[/color]\\n"
+                f"[color=ffffff]RSI:[/color] [color=ff8888]{best['rsi']:.1f}[/color]\\n"
+                f"[color=ffffff]Funding:[/color] [color=ffffff]{format_funding(best_coin['f'])}[/color]\\n"
+                f"[color=ffffff]Degisim:[/color] [color=00ff88]%{best_coin['ch']:.2f}[/color]\\n"
                 f"[color=ffffff]Kirmizi mum:[/color] [color=ffffff]{red_text}[/color]"
             )
         else:
@@ -859,12 +885,12 @@ class RadarKVApp(App):
         detail.glow_g = g
         detail.glow_b = b
         detail.info_text = (
-            f"[color=cccccc]Fiyat:[/color] [color=ffffff]{format_price(coin['p'])}[/color]\n"
-            f"[color=cccccc]Degisim:[/color] [color=00ff88]%{coin['ch']:.2f}[/color]\n"
-            f"[color=cccccc]Hacim:[/color] [color=ffffff]{format_volume(coin['v'])}[/color]\n"
-            f"[color=cccccc]Funding:[/color] [color=ffffff]{format_funding(coin['f'])}[/color]\n"
-            f"[color=cccccc]RSI (1s):[/color] [color=ffffff]{rsi_text}[/color]\n"
-            f"[color=cccccc]Short Puani:[/color] [color=ffffff]{score}[/color]\n"
+            f"[color=cccccc]Fiyat:[/color] [color=ffffff]{format_price(coin['p'])}[/color]\\n"
+            f"[color=cccccc]Degisim:[/color] [color=00ff88]%{coin['ch']:.2f}[/color]\\n"
+            f"[color=cccccc]Hacim:[/color] [color=ffffff]{format_volume(coin['v'])}[/color]\\n"
+            f"[color=cccccc]Funding:[/color] [color=ffffff]{format_funding(coin['f'])}[/color]\\n"
+            f"[color=cccccc]RSI (1s):[/color] [color=ffffff]{rsi_text}[/color]\\n"
+            f"[color=cccccc]Short Puani:[/color] [color=ffffff]{score}[/color]\\n"
             f"[color=cccccc]Kirmizi Mum:[/color] [color=ffffff]{mum_text}[/color]"
         )
         detail.analysis_text = build_mini_analysis(coin, rsi, red, score)
