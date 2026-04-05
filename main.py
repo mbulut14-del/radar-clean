@@ -11,7 +11,7 @@ from kivy.uix.gridlayout import GridLayout
 from kivy.uix.label import Label
 from kivy.uix.scrollview import ScrollView
 from kivy.uix.button import Button
-from kivy.uix.image import Image
+from kivy.uix.image import AsyncImage
 from kivy.uix.screenmanager import ScreenManager, Screen
 
 TICKERS_URL = "https://fx-api.gateio.ws/api/v4/futures/usdt/tickers"
@@ -305,13 +305,12 @@ class SplashScreen(Screen):
         )
         self.add_widget(root)
 
-        root.add_widget(Label(size_hint_y=0.15))
+        root.add_widget(Label(size_hint_y=0.12))
 
-        self.logo = Image(
+        self.logo = AsyncImage(
             source="logo.png",
-            size_hint=(1, 0.45),
-            allow_stretch=True,
-            keep_ratio=True
+            size_hint=(1, 0.42),
+            fit_mode="contain"
         )
         root.add_widget(self.logo)
 
@@ -334,14 +333,13 @@ class SplashScreen(Screen):
         )
         root.add_widget(self.tagline_label)
 
-        root.add_widget(Label(size_hint_y=0.40))
+        root.add_widget(Label(size_hint_y=0.42))
 
     def on_enter(self, *args):
         Clock.schedule_once(self.go_main, 3)
 
     def go_main(self, dt):
-        app = App.get_running_app()
-        app.sm.current = "main"
+        App.get_running_app().sm.current = "main"
 
 
 class MainScreen(Screen):
