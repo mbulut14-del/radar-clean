@@ -341,10 +341,45 @@ class MainScreen(Screen):
             size_hint_y=None,
             height=dp(215)
         )
+
         with self.hero_card.canvas.before:
             from kivy.graphics import Color, RoundedRectangle
-            Color(1, 0.22, 0.22, 0.95)
-            self.hero_bg = RoundedRectangle(pos=self.hero_card.pos, size=self.hero_card.size, radius=[22])
+
+            Color(1, 0.20, 0.20, 0.14)
+            self.hero_glow_outer = RoundedRectangle(
+                pos=(self.hero_card.x - dp(8), self.hero_card.y - dp(8)),
+                size=(self.hero_card.width + dp(16), self.hero_card.height + dp(16)),
+                radius=[28]
+            )
+
+            Color(1, 0.28, 0.18, 0.22)
+            self.hero_glow_mid = RoundedRectangle(
+                pos=(self.hero_card.x - dp(4), self.hero_card.y - dp(4)),
+                size=(self.hero_card.width + dp(8), self.hero_card.height + dp(8)),
+                radius=[25]
+            )
+
+            Color(0.20, 0.03, 0.04, 1)
+            self.hero_bg = RoundedRectangle(
+                pos=self.hero_card.pos,
+                size=self.hero_card.size,
+                radius=[22]
+            )
+
+            Color(1, 0.30, 0.24, 0.95)
+            self.hero_border = RoundedRectangle(
+                pos=self.hero_card.pos,
+                size=self.hero_card.size,
+                radius=[22]
+            )
+
+            Color(0.55, 0.06, 0.08, 0.55)
+            self.hero_inner = RoundedRectangle(
+                pos=(self.hero_card.x + dp(3), self.hero_card.y + dp(3)),
+                size=(self.hero_card.width - dp(6), self.hero_card.height - dp(6)),
+                radius=[20]
+            )
+
         self.hero_card.bind(pos=self._update_hero_rect, size=self._update_hero_rect)
 
         self.hero_coin = LeftLabel(
@@ -448,8 +483,20 @@ class MainScreen(Screen):
         self.content.add_widget(self.footer_label)
 
     def _update_hero_rect(self, *args):
+        self.hero_glow_outer.pos = (self.hero_card.x - dp(8), self.hero_card.y - dp(8))
+        self.hero_glow_outer.size = (self.hero_card.width + dp(16), self.hero_card.height + dp(16))
+
+        self.hero_glow_mid.pos = (self.hero_card.x - dp(4), self.hero_card.y - dp(4))
+        self.hero_glow_mid.size = (self.hero_card.width + dp(8), self.hero_card.height + dp(8))
+
         self.hero_bg.pos = self.hero_card.pos
         self.hero_bg.size = self.hero_card.size
+
+        self.hero_border.pos = self.hero_card.pos
+        self.hero_border.size = self.hero_card.size
+
+        self.hero_inner.pos = (self.hero_card.x + dp(3), self.hero_card.y + dp(3))
+        self.hero_inner.size = (max(0, self.hero_card.width - dp(6)), max(0, self.hero_card.height - dp(6)))
 
     def open_detail(self, button):
         app = App.get_running_app()
