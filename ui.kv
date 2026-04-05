@@ -4,6 +4,7 @@
 <MainScreen>:
     ScrollView:
         do_scroll_x: False
+        bar_width: dp(6)
 
         GridLayout:
             cols: 1
@@ -14,7 +15,7 @@
 
             canvas.before:
                 Color:
-                    rgba: 0.02, 0.02, 0.03, 1
+                    rgba: 0.03, 0.03, 0.05, 1
                 Rectangle:
                     pos: self.pos
                     size: self.size
@@ -36,156 +37,74 @@
                 bold: True
                 color: 1, 1, 1, 1
                 size_hint_y: None
-                height: dp(32)
+                height: dp(34)
                 halign: "left"
                 valign: "middle"
                 text_size: self.size
 
-            BoxLayout:
-                orientation: "horizontal"
+            FloatLayout:
                 size_hint_y: None
                 height: dp(220)
-                padding: dp(16)
-                spacing: dp(14)
 
                 canvas.before:
                     Color:
-                        rgba: 1, 0.25, 0.08, 0.09
-                    RoundedRectangle:
-                        pos: self.x - dp(8), self.y - dp(8)
-                        size: self.width + dp(16), self.height + dp(16)
-                        radius: [28]
-
-                    Color:
-                        rgba: 1, 0.22, 0.08, 0.20
-                    RoundedRectangle:
-                        pos: self.x - dp(3), self.y - dp(3)
-                        size: self.width + dp(6), self.height + dp(6)
-                        radius: [26]
-
-                    Color:
-                        rgba: 0.10, 0.03, 0.03, 1
+                        rgba: 1, 1, 1, 1
                     RoundedRectangle:
                         pos: self.pos
                         size: self.size
                         radius: [24]
+                        source: "hero.png"
 
-                    Color:
-                        rgba: 0.55, 0.07, 0.06, 0.98
-                    RoundedRectangle:
-                        pos: self.x + dp(6), self.y + dp(6)
-                        size: self.width - dp(12), self.height - dp(12)
-                        radius: [21]
+                Label:
+                    id: hero_score
+                    text: "0"
+                    font_size: "30sp"
+                    bold: True
+                    color: 1, 1, 1, 1
+                    size_hint: None, None
+                    size: dp(72), dp(72)
+                    pos_hint: {"x": 0.06, "center_y": 0.50}
+                    halign: "center"
+                    valign: "middle"
+                    text_size: self.size
 
-                    Color:
-                        rgba: 1, 0.40, 0.12, 0.95
-                    Line:
-                        width: 1.35
-                        rounded_rectangle: (self.x + dp(1), self.y + dp(1), self.width - dp(2), self.height - dp(2), dp(24))
+                Label:
+                    text: "EN GUCLU SHORT ADAYI"
+                    font_size: "14sp"
+                    bold: True
+                    color: 1, 0.70, 0.22, 1
+                    size_hint: None, None
+                    size: dp(210), dp(24)
+                    pos_hint: {"x": 0.39, "top": 0.76}
+                    halign: "left"
+                    valign: "middle"
+                    text_size: self.size
 
-                    Color:
-                        rgba: 1, 0.75, 0.22, 0.70
-                    Line:
-                        width: 1
-                        rounded_rectangle: (self.x + dp(7), self.y + dp(7), self.width - dp(14), self.height - dp(14), dp(21))
+                Label:
+                    id: hero_coin
+                    text: "Sinyal yok"
+                    font_size: "28sp"
+                    bold: True
+                    color: 1, 1, 1, 1
+                    size_hint: None, None
+                    size: dp(220), dp(40)
+                    pos_hint: {"x": 0.39, "top": 0.60}
+                    halign: "left"
+                    valign: "middle"
+                    text_size: self.size
 
-                    Color:
-                        rgba: 1, 1, 1, 0.05
-                    Line:
-                        width: 1
-                        points: self.x + dp(20), self.top - dp(24), self.right - dp(20), self.top - dp(24)
-
-                    Color:
-                        rgba: 1, 0.55, 0.20, 0.12
-                    Ellipse:
-                        pos: self.right - dp(165), self.top - dp(145)
-                        size: dp(185), dp(145)
-
-                    Color:
-                        rgba: 1, 0.20, 0.10, 0.10
-                    Ellipse:
-                        pos: self.x + dp(8), self.y - dp(32)
-                        size: dp(250), dp(140)
-
-                FloatLayout:
-                    size_hint_x: None
-                    width: dp(132)
-
-                    canvas.before:
-                        Color:
-                            rgba: 1, 0.35, 0.18, 0.16
-                        Ellipse:
-                            pos: self.x + dp(2), self.y + dp(2)
-                            size: dp(122), dp(122)
-
-                        Color:
-                            rgba: 1, 0.42, 0.20, 1
-                        Line:
-                            circle: self.center_x, self.center_y, dp(48)
-                            width: dp(8)
-
-                        Color:
-                            rgba: 0.22, 0.96, 0.72, 1
-                        Line:
-                            circle: self.center_x, self.center_y, dp(38)
-                            width: dp(6)
-
-                        Color:
-                            rgba: 0.03, 0.04, 0.08, 1
-                        Ellipse:
-                            pos: self.center_x - dp(30), self.center_y - dp(30)
-                            size: dp(60), dp(60)
-
-                    Label:
-                        id: hero_score
-                        text: "0"
-                        font_size: "26sp"
-                        bold: True
-                        color: 1, 1, 1, 1
-                        center: self.parent.center
-
-                BoxLayout:
-                    orientation: "vertical"
-                    spacing: dp(4)
-
-                    Widget:
-                        size_hint_y: None
-                        height: dp(4)
-
-                    Label:
-                        text: "EN GUCLU SHORT ADAYI"
-                        font_size: "14sp"
-                        bold: True
-                        color: 1, 0.88, 0.72, 1
-                        size_hint_y: None
-                        height: dp(22)
-                        halign: "left"
-                        valign: "middle"
-                        text_size: self.size
-
-                    Label:
-                        id: hero_coin
-                        text: "..."
-                        font_size: "28sp"
-                        bold: True
-                        color: 1, 1, 1, 1
-                        size_hint_y: None
-                        height: dp(42)
-                        halign: "left"
-                        valign: "middle"
-                        text_size: self.size
-
-                    Label:
-                        id: hero_info
-                        text: ""
-                        font_size: "16sp"
-                        markup: True
-                        color: 1, 1, 1, 1
-                        halign: "left"
-                        valign: "top"
-                        text_size: self.width, None
-                        size_hint_y: None
-                        height: self.texture_size[1]
+                Label:
+                    id: hero_info
+                    text: "Su an guclu short adayi bulunamadi."
+                    markup: True
+                    font_size: "16sp"
+                    color: 0.92, 0.92, 0.92, 1
+                    size_hint: None, None
+                    size: dp(210), dp(96)
+                    pos_hint: {"x": 0.39, "y": 0.16}
+                    halign: "left"
+                    valign: "top"
+                    text_size: self.size
 
             Label:
                 text: "Gate.io Vadeli En Cok Yukselenler"
@@ -209,6 +128,7 @@
 <DetailScreen>:
     ScrollView:
         do_scroll_x: False
+        bar_width: dp(6)
 
         GridLayout:
             cols: 1
@@ -219,14 +139,14 @@
 
             canvas.before:
                 Color:
-                    rgba: 0.02, 0.02, 0.03, 1
+                    rgba: 0.03, 0.03, 0.05, 1
                 Rectangle:
                     pos: self.pos
                     size: self.size
 
             Label:
                 text: root.coin_name
-                font_size: "28sp"
+                font_size: "30sp"
                 bold: True
                 color: 1, 1, 1, 1
                 size_hint_y: None
@@ -236,9 +156,8 @@
                 text_size: self.size
 
             BoxLayout:
-                orientation: "horizontal"
                 size_hint_y: None
-                height: dp(220)
+                height: dp(225)
                 padding: dp(16)
                 spacing: dp(14)
 
@@ -250,49 +169,37 @@
                         size: self.size
                         radius: [22]
 
-                FloatLayout:
+                Label:
+                    text: root.score_text
                     size_hint_x: None
-                    width: dp(132)
+                    width: dp(120)
+                    font_size: "26sp"
+                    bold: True
+                    color: 1, 1, 1, 1
+                    halign: "center"
+                    valign: "middle"
+                    text_size: self.size
 
                     canvas.before:
                         Color:
-                            rgba: 0.20, 0.95, 0.72, 0.14
-                        Ellipse:
-                            pos: self.x + dp(2), self.y + dp(2)
-                            size: dp(122), dp(122)
-
-                        Color:
-                            rgba: 0.20, 0.95, 0.72, 1
+                            rgba: 1, 0.38, 0.28, 1
                         Line:
-                            circle: self.center_x, self.center_y, dp(48)
+                            ellipse: self.x + dp(14), self.y + dp(14), self.width - dp(28), self.height - dp(28)
                             width: dp(8)
-
-                        Color:
-                            rgba: 0.10, 0.55, 0.42, 1
-                        Line:
-                            circle: self.center_x, self.center_y, dp(38)
-                            width: dp(6)
 
                         Color:
                             rgba: 0.03, 0.04, 0.08, 1
                         Ellipse:
-                            pos: self.center_x - dp(30), self.center_y - dp(30)
-                            size: dp(60), dp(60)
-
-                    Label:
-                        text: root.score_text
-                        font_size: "24sp"
-                        bold: True
-                        color: 1, 1, 1, 1
-                        center: self.parent.center
+                            pos: self.x + dp(28), self.y + dp(28)
+                            size: self.width - dp(56), self.height - dp(56)
 
                 BoxLayout:
                     orientation: "vertical"
-                    spacing: dp(4)
+                    spacing: dp(6)
 
                     Label:
                         text: "COIN DETAYI"
-                        font_size: "17sp"
+                        font_size: "18sp"
                         bold: True
                         color: 1, 1, 1, 1
                         size_hint_y: None
