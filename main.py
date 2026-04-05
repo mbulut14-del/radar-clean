@@ -3,6 +3,7 @@ import requests
 from datetime import datetime
 
 from kivy.app import App
+from kivy.lang import Builder
 from kivy.clock import Clock
 from kivy.core.window import Window
 from kivy.metrics import dp
@@ -836,6 +837,7 @@ class DetailScreen(Screen):
 
 class RadarApp(App):
     def build(self):
+        Builder.load_file("ui.kv")
         Window.clearcolor = (0, 0, 0, 1)
 
         self.session = requests.Session()
