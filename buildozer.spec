@@ -4,7 +4,7 @@ package.name = hype_short_radar
 package.domain = org.test
 
 source.dir = .
-source.include_exts = py
+source.include_exts = py,png,jpg,kv,atlas
 
 version = 0.1
 
