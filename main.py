@@ -11,6 +11,7 @@ from kivy.uix.gridlayout import GridLayout
 from kivy.uix.label import Label
 from kivy.uix.scrollview import ScrollView
 from kivy.uix.button import Button
+from kivy.uix.behaviors import ButtonBehavior
 from kivy.uix.screenmanager import ScreenManager, Screen
 
 TICKERS_URL = "https://fx-api.gateio.ws/api/v4/futures/usdt/tickers"
@@ -269,6 +270,7 @@ class LeftLabel(Label):
     def __init__(self, **kwargs):
         kwargs.setdefault("halign", "left")
         kwargs.setdefault("valign", "middle")
+        kwargs.setdefault("color", (1, 1, 1, 1))
         super().__init__(**kwargs)
         self.bind(size=self._update_text_size)
 
@@ -276,14 +278,23 @@ class LeftLabel(Label):
         self.text_size = (self.width, None)
 
 
-class CardButton(Button):
+class CardButton(ButtonBehavior, BoxLayout):
     def __init__(self, **kwargs):
-        kwargs.setdefault("background_normal", "")
-        kwargs.setdefault("background_down", "")
-        kwargs.setdefault("background_color", (0.07, 0.07, 0.10, 1))
+        kwargs.setdefault("orientation", "vertical")
         kwargs.setdefault("size_hint_y", None)
         kwargs.setdefault("height", dp(92))
         super().__init__(**kwargs)
+
+        from kivy.graphics import Color, RoundedRectangle
+        with self.canvas.before:
+            Color(0.07, 0.07, 0.10, 1)
+            self.bg_rect = RoundedRectangle(pos=self.pos, size=self.size, radius=[18])
+
+        self.bind(pos=self._update_bg, size=self._update_bg)
+
+    def _update_bg(self, *args):
+        self.bg_rect.pos = self.pos
+        self.bg_rect.size = self.size
 
 
 class MainScreen(Screen):
@@ -332,12 +343,8 @@ class MainScreen(Screen):
         )
         with self.hero_card.canvas.before:
             from kivy.graphics import Color, RoundedRectangle
-            Color(0.10, 0.06, 0.07, 1)
-            self.hero_bg = RoundedRectangle(pos=self.hero_card.pos, size=self.hero_card.size, radius=[22])
             Color(1, 0.22, 0.22, 0.95)
-            self.hero_border = RoundedRectangle(pos=(self.hero_card.x - 1, self.hero_card.y - 1),
-                                                size=(self.hero_card.width + 2, self.hero_card.height + 2),
-                                                radius=[22])
+            self.hero_bg = RoundedRectangle(pos=self.hero_card.pos, size=self.hero_card.size, radius=[22])
         self.hero_card.bind(pos=self._update_hero_rect, size=self._update_hero_rect)
 
         self.hero_coin = LeftLabel(
@@ -399,7 +406,8 @@ class MainScreen(Screen):
             coin_label = LeftLabel(
                 text="Yükleniyor...",
                 font_size="20sp",
-                bold=True
+                bold=True,
+                color=(1, 1, 1, 1)
             )
             coin_wrap.add_widget(coin_label)
 
@@ -412,7 +420,8 @@ class MainScreen(Screen):
                 text="-",
                 markup=True,
                 font_size="18sp",
-                bold=True
+                bold=True,
+                color=(1, 1, 1, 1)
             )
             right_wrap.add_widget(right_badge)
 
@@ -433,15 +442,14 @@ class MainScreen(Screen):
             text="Son güncelleme: -",
             font_size="15sp",
             size_hint_y=None,
-            height=dp(30)
+            height=dp(30),
+            color=(0.8, 0.8, 0.8, 1)
         )
         self.content.add_widget(self.footer_label)
 
     def _update_hero_rect(self, *args):
         self.hero_bg.pos = self.hero_card.pos
         self.hero_bg.size = self.hero_card.size
-        self.hero_border.pos = self.hero_card.pos
-        self.hero_border.size = self.hero_card.size
 
     def open_detail(self, button):
         app = App.get_running_app()
@@ -469,7 +477,7 @@ class MainScreen(Screen):
                 f"[color=ffffff]RSI:[/color] [color={get_rsi_color(best['rsi'])}]{best['rsi']:.1f}[/color]\n"
                 f"[color=ffffff]Funding:[/color] [color={get_funding_color(best_coin['f'])}]{format_funding(best_coin['f'])}[/color]\n"
                 f"[color=ffffff]Değişim:[/color] [color={get_change_color(best_coin['ch'])}]%{best_coin['ch']:.2f}[/color]\n"
-                f"[color=ff8d8d]Kırmızı mum:[/color] [color=ff8d8d]{red_text}[/color]"
+                f"[color=ffdddd]Kırmızı mum:[/color] [color=ffffff]{red_text}[/color]"
             )
         else:
             self.hero_coin.text = "Sinyal yok"
@@ -495,11 +503,11 @@ class MainScreen(Screen):
                     score = 0
 
                 if i < 2:
-                    badge_text = f"[color=0b1a12][b]+{coin['ch']:.2f}%[/b][/color]"
+                    badge_text = f"[color=00ff88][b]+{coin['ch']:.2f}%[/b][/color]"
                 elif score >= 50:
-                    badge_text = f"[color=24140f][b]{score}  >[/b][/color]"
+                    badge_text = f"[color=ffb347][b]{score} >[/b][/color]"
                 else:
-                    badge_text = f"[color=0b1a12][b]+{coin['ch']:.2f}%[/b][/color]"
+                    badge_text = f"[color=00ff88][b]+{coin['ch']:.2f}%[/b][/color]"
 
                 card.right_badge.text = badge_text
             else:
