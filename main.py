@@ -8,7 +8,7 @@ from kivy.core.window import Window
 from kivy.properties import StringProperty, NumericProperty, DictProperty
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.behaviors import ButtonBehavior
-from kivy.uix.screenmanager import Screen, ScreenManager
+from kivy.uix.screenmanager import Screen
 
 
 TICKERS_URL = "https://fx-api.gateio.ws/api/v4/futures/usdt/tickers"
@@ -24,36 +24,55 @@ KV = """
 
 <ClickCard>:
     size_hint_y: None
-    height: dp(108)
-    padding: dp(12)
+    height: dp(114)
+    padding: dp(14)
     spacing: dp(14)
 
     canvas.before:
+        # outer glow
         Color:
-            rgba: 0.10, 0.08, 0.14, 1
+            rgba: root.glow_r, root.glow_g, root.glow_b, 0.08
+        RoundedRectangle:
+            pos: self.x - dp(5), self.y - dp(5)
+            size: self.width + dp(10), self.height + dp(10)
+            radius: [28, 28, 28, 28]
+
+        # body
+        Color:
+            rgba: 0.05, 0.05, 0.08, 1
         RoundedRectangle:
             pos: self.pos
             size: self.size
-            radius: [22, 22, 22, 22]
-
-        Color:
-            rgba: root.glow_r, root.glow_g, root.glow_b, 0.10
-        RoundedRectangle:
-            pos: self.x - dp(2), self.y - dp(2)
-            size: self.width + dp(4), self.height + dp(4)
             radius: [24, 24, 24, 24]
 
+        # inner tint
         Color:
-            rgba: 0.30, 0.22, 0.30, 0.55
-        Line:
-            width: 1.15
-            rounded_rectangle: (self.x, self.y, self.width, self.height, dp(22))
+            rgba: 0.10, 0.08, 0.14, 0.95
+        RoundedRectangle:
+            pos: self.x + dp(2), self.y + dp(2)
+            size: self.width - dp(4), self.height - dp(4)
+            radius: [22, 22, 22, 22]
 
+        # border
         Color:
-            rgba: root.glow_r, root.glow_g, root.glow_b, 0.18
+            rgba: 0.24, 0.20, 0.28, 0.85
         Line:
-            width: 1.05
-            rounded_rectangle: (self.x + dp(1), self.y + dp(1), self.width - dp(2), self.height - dp(2), dp(21))
+            width: 1.1
+            rounded_rectangle: (self.x, self.y, self.width, self.height, dp(24))
+
+        # neon border
+        Color:
+            rgba: root.glow_r, root.glow_g, root.glow_b, 0.17
+        Line:
+            width: 1.0
+            rounded_rectangle: (self.x + dp(1), self.y + dp(1), self.width - dp(2), self.height - dp(2), dp(23))
+
+        # light strip
+        Color:
+            rgba: 1, 1, 1, 0.035
+        Line:
+            width: 1
+            points: self.x + dp(18), self.top - dp(18), self.right - dp(18), self.top - dp(18)
 
     BoxLayout:
         size_hint_x: None
@@ -62,19 +81,19 @@ KV = """
 
         canvas.before:
             Color:
-                rgba: 0.10, 0.60, 1.0, 0.13
+                rgba: 0.10, 0.60, 1.0, 0.15
             Ellipse:
                 pos: self.x - dp(5), self.y - dp(5)
                 size: self.width + dp(10), self.height + dp(10)
 
             Color:
-                rgba: 0.14, 0.63, 1.0, 1
+                rgba: 0.15, 0.65, 1.0, 1
             Ellipse:
                 pos: self.pos
                 size: self.size
 
             Color:
-                rgba: 0.05, 0.05, 0.10, 1
+                rgba: 0.04, 0.05, 0.09, 1
             Ellipse:
                 pos: self.x + dp(7), self.y + dp(7)
                 size: self.width - dp(14), self.height - dp(14)
@@ -87,29 +106,33 @@ KV = """
 
     BoxLayout:
         orientation: "vertical"
-        spacing: dp(2)
+        spacing: dp(3)
+
+        Widget:
 
         Label:
             text: root.coin_text
             font_size: "20sp"
             bold: True
-            color: 1, 0.38, 0.38, 1
+            color: 1, 0.40, 0.40, 1
             size_hint_y: None
-            height: dp(34)
+            height: dp(32)
             halign: "left"
             valign: "middle"
             text_size: self.size
 
         Label:
             text: root.change_text
-            font_size: "18sp"
+            font_size: "17sp"
             bold: True
-            color: 0.20, 0.98, 0.66, 1
+            color: 0.22, 0.98, 0.68, 1
             size_hint_y: None
-            height: dp(28)
+            height: dp(26)
             halign: "left"
             valign: "middle"
             text_size: self.size
+
+        Widget:
 
     BoxLayout:
         size_hint_x: None
@@ -117,29 +140,47 @@ KV = """
         padding: dp(5)
 
         canvas.before:
+            # outer glow
             Color:
                 rgba: root.glow_r, root.glow_g, root.glow_b, 0.10
             Ellipse:
-                pos: self.x - dp(8), self.y - dp(8)
-                size: self.width + dp(16), self.height + dp(16)
+                pos: self.x - dp(10), self.y - dp(10)
+                size: self.width + dp(20), self.height + dp(20)
 
+            # mid glow
             Color:
-                rgba: root.glow_r, root.glow_g, root.glow_b, 0.22
+                rgba: root.glow_r, root.glow_g, root.glow_b, 0.20
             Ellipse:
-                pos: self.x - dp(3), self.y - dp(3)
-                size: self.width + dp(6), self.height + dp(6)
+                pos: self.x - dp(4), self.y - dp(4)
+                size: self.width + dp(8), self.height + dp(8)
 
+            # ring
             Color:
                 rgba: root.glow_r, root.glow_g, root.glow_b, 1
             Ellipse:
                 pos: self.pos
                 size: self.size
 
+            # ring mid
             Color:
-                rgba: 0.05, 0.05, 0.10, 1
+                rgba: 0.18, 0.12, 0.12, 0.28
             Ellipse:
-                pos: self.x + dp(10), self.y + dp(10)
-                size: self.width - dp(20), self.height - dp(20)
+                pos: self.x + dp(5), self.y + dp(5)
+                size: self.width - dp(10), self.height - dp(10)
+
+            # core
+            Color:
+                rgba: 0.04, 0.05, 0.09, 1
+            Ellipse:
+                pos: self.x + dp(11), self.y + dp(11)
+                size: self.width - dp(22), self.height - dp(22)
+
+            # highlight
+            Color:
+                rgba: 1, 1, 1, 0.08
+            Line:
+                width: 1
+                ellipse: (self.x + dp(6), self.y + dp(6), self.width - dp(12), self.height - dp(12))
 
         Label:
             text: root.score_text
@@ -163,10 +204,16 @@ KV = """
 
             canvas.before:
                 Color:
-                    rgba: 0, 0, 0, 1
+                    rgba: 0.015, 0.015, 0.02, 1
                 Rectangle:
                     pos: self.pos
                     size: self.size
+
+                Color:
+                    rgba: 1.0, 0.28, 0.08, 0.03
+                Rectangle:
+                    pos: self.x, self.top - dp(300)
+                    size: self.width, dp(300)
 
             Label:
                 text: "SHORT RADAR"
@@ -192,86 +239,99 @@ KV = """
 
             BoxLayout:
                 size_hint_y: None
-                height: dp(248)
-                padding: dp(16)
+                height: dp(286)
+                padding: dp(18)
                 spacing: dp(16)
 
                 canvas.before:
+                    # outer neon glow
                     Color:
-                        rgba: 1.0, 0.32, 0.12, 0.09
+                        rgba: 1.0, 0.30, 0.08, 0.08
                     RoundedRectangle:
-                        pos: self.x - dp(8), self.y - dp(8)
-                        size: self.width + dp(16), self.height + dp(16)
-                        radius: [28, 28, 28, 28]
+                        pos: self.x - dp(10), self.y - dp(10)
+                        size: self.width + dp(20), self.height + dp(20)
+                        radius: [34, 34, 34, 34]
 
                     Color:
-                        rgba: 1.0, 0.28, 0.10, 0.16
+                        rgba: 1.0, 0.26, 0.06, 0.16
                     RoundedRectangle:
-                        pos: self.x - dp(3), self.y - dp(3)
-                        size: self.width + dp(6), self.height + dp(6)
-                        radius: [26, 26, 26, 26]
+                        pos: self.x - dp(4), self.y - dp(4)
+                        size: self.width + dp(8), self.height + dp(8)
+                        radius: [30, 30, 30, 30]
 
+                    # body dark
                     Color:
-                        rgba: 0.18, 0.05, 0.07, 1
+                        rgba: 0.08, 0.02, 0.03, 1
                     RoundedRectangle:
                         pos: self.pos
                         size: self.size
-                        radius: [24, 24, 24, 24]
+                        radius: [28, 28, 28, 28]
 
+                    # red main panel
                     Color:
-                        rgba: 0.52, 0.08, 0.08, 0.75
+                        rgba: 0.42, 0.05, 0.05, 1
                     RoundedRectangle:
                         pos: self.x + dp(6), self.y + dp(6)
                         size: self.width - dp(12), self.height - dp(12)
-                        radius: [22, 22, 22, 22]
+                        radius: [24, 24, 24, 24]
 
+                    # internal orange gradient-like blob
                     Color:
-                        rgba: 1.0, 0.30, 0.08, 0.92
-                    Line:
-                        width: 1.3
-                        rounded_rectangle: (self.x + dp(1), self.y + dp(1), self.width - dp(2), self.height - dp(2), dp(24))
-
-                    Color:
-                        rgba: 1.0, 0.64, 0.14, 0.75
-                    Line:
-                        width: 1.0
-                        rounded_rectangle: (self.x + dp(7), self.y + dp(7), self.width - dp(14), self.height - dp(14), dp(21))
-
-                    Color:
-                        rgba: 1, 1, 1, 0.05
-                    Line:
-                        width: 1
-                        points: self.x + dp(22), self.top - dp(56), self.right - dp(22), self.top - dp(56)
-
-                    Color:
-                        rgba: 1.0, 0.55, 0.20, 0.14
+                        rgba: 1.0, 0.48, 0.12, 0.11
                     Ellipse:
-                        pos: self.right - dp(170), self.top - dp(155)
-                        size: dp(185), dp(185)
+                        pos: self.right - dp(210), self.top - dp(210)
+                        size: dp(220), dp(220)
 
                     Color:
                         rgba: 1.0, 0.20, 0.10, 0.10
                     Ellipse:
-                        pos: self.x + dp(10), self.y - dp(35)
-                        size: dp(280), dp(180)
+                        pos: self.x + dp(0), self.y - dp(55)
+                        size: dp(290), dp(190)
+
+                    # borders
+                    Color:
+                        rgba: 1.0, 0.34, 0.08, 0.96
+                    Line:
+                        width: 1.5
+                        rounded_rectangle: (self.x + dp(1), self.y + dp(1), self.width - dp(2), self.height - dp(2), dp(28))
+
+                    Color:
+                        rgba: 1.0, 0.74, 0.18, 0.75
+                    Line:
+                        width: 1.0
+                        rounded_rectangle: (self.x + dp(7), self.y + dp(7), self.width - dp(14), self.height - dp(14), dp(24))
+
+                    # top highlight
+                    Color:
+                        rgba: 1, 1, 1, 0.05
+                    Line:
+                        width: 1
+                        points: self.x + dp(22), self.top - dp(26), self.right - dp(22), self.top - dp(26)
+
+                    # divider
+                    Color:
+                        rgba: 1, 1, 1, 0.04
+                    Line:
+                        width: 1
+                        points: self.x + dp(160), self.y + dp(32), self.x + dp(160), self.top - dp(32)
 
                 BoxLayout:
                     size_hint_x: None
-                    width: dp(116)
-                    padding: dp(6)
+                    width: dp(126)
+                    padding: dp(4)
 
                     canvas.before:
                         Color:
-                            rgba: root.hero_glow_r, root.hero_glow_g, root.hero_glow_b, 0.12
+                            rgba: root.hero_glow_r, root.hero_glow_g, root.hero_glow_b, 0.10
                         Ellipse:
-                            pos: self.x - dp(16), self.y - dp(16)
-                            size: self.width + dp(32), self.height + dp(32)
+                            pos: self.x - dp(18), self.y - dp(18)
+                            size: self.width + dp(36), self.height + dp(36)
 
                         Color:
-                            rgba: root.hero_glow_r, root.hero_glow_g, root.hero_glow_b, 0.20
+                            rgba: root.hero_glow_r, root.hero_glow_g, root.hero_glow_b, 0.22
                         Ellipse:
-                            pos: self.x - dp(7), self.y - dp(7)
-                            size: self.width + dp(14), self.height + dp(14)
+                            pos: self.x - dp(8), self.y - dp(8)
+                            size: self.width + dp(16), self.height + dp(16)
 
                         Color:
                             rgba: root.hero_glow_r, root.hero_glow_g, root.hero_glow_b, 1
@@ -280,16 +340,16 @@ KV = """
                             size: self.size
 
                         Color:
-                            rgba: 0.36, 0.10, 0.08, 0.42
+                            rgba: 0.35, 0.08, 0.04, 0.35
                         Ellipse:
                             pos: self.x + dp(6), self.y + dp(6)
                             size: self.width - dp(12), self.height - dp(12)
 
                         Color:
-                            rgba: 0.05, 0.05, 0.10, 1
+                            rgba: 0.05, 0.05, 0.09, 1
                         Ellipse:
-                            pos: self.x + dp(16), self.y + dp(16)
-                            size: self.width - dp(32), self.height - dp(32)
+                            pos: self.x + dp(18), self.y + dp(18)
+                            size: self.width - dp(36), self.height - dp(36)
 
                         Color:
                             rgba: 1, 1, 1, 0.08
@@ -300,27 +360,31 @@ KV = """
                     Label:
                         text: root.hero_score
                         bold: True
-                        font_size: "24sp"
+                        font_size: "25sp"
                         color: 1, 1, 1, 1
 
                 BoxLayout:
                     orientation: "vertical"
                     spacing: dp(5)
 
-                    Label:
-                        text: "EN GUCLU SHORT\\nADAYI"
-                        font_size: "17sp"
-                        bold: True
-                        color: 1, 1, 1, 1
+                    Widget:
                         size_hint_y: None
-                        height: dp(52)
+                        height: dp(2)
+
+                    Label:
+                        text: "EN GUCLU SHORT"
+                        font_size: "14sp"
+                        bold: True
+                        color: 1, 0.88, 0.70, 1
+                        size_hint_y: None
+                        height: dp(20)
                         halign: "left"
                         valign: "middle"
                         text_size: self.size
 
                     Label:
                         text: root.hero_coin
-                        font_size: "29sp"
+                        font_size: "30sp"
                         bold: True
                         color: 1, 1, 1, 1
                         size_hint_y: None
@@ -372,6 +436,13 @@ KV = """
             spacing: dp(14)
             size_hint_y: None
             height: self.minimum_height
+
+            canvas.before:
+                Color:
+                    rgba: 0.015, 0.015, 0.02, 1
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
 
             Label:
                 text: root.coin_name
@@ -905,6 +976,7 @@ class RadarKVApp(App):
         main = self.sm.get_screen("main")
         main.hero_coin = "Veri cekme hatasi"
         main.hero_score = "0"
+        main.hero_glow_r, main.hero_glow_g, main.hero_glow_b = self.get_glow(0)
         main.hero_info = "[color=ff6666]Sunucudan veri alinamadi.[/color]"
         self.worker_running = False
 
@@ -923,9 +995,9 @@ class RadarKVApp(App):
             main.hero_glow_g = g
             main.hero_glow_b = b
             main.hero_info = (
-                f"[color=ffffff]Puan:[/color] [color=ffb347]{best['score']}[/color]\\n"
-                f"[color=ffffff]RSI:[/color] [color=ff8888]{best['rsi']:.1f}[/color]\\n"
-                f"[color=ffffff]Funding:[/color] [color=ffffff]{format_funding(best_coin['f'])}[/color]\\n"
+                f"[color=ffffff]Puan:[/color] [color=ffcf66]{best['score']}[/color]\\n"
+                f"[color=ffffff]RSI:[/color] [color=ff9b8f]{best['rsi']:.1f}[/color]\\n"
+                f"[color=ffffff]Funding:[/color] [color=88ff88]{format_funding(best_coin['f'])}[/color]\\n"
                 f"[color=ffffff]Degisim:[/color] [color=00ff88]%{best_coin['ch']:.2f}[/color]\\n"
                 f"[color=ffffff]Kirmizi mum:[/color] [color=ffffff]{red_text}[/color]"
             ).replace("\\n", "\n")
@@ -933,7 +1005,7 @@ class RadarKVApp(App):
             main.hero_coin = "Sinyal yok"
             main.hero_score = "0"
             main.hero_glow_r, main.hero_glow_g, main.hero_glow_b = self.get_glow(0)
-            main.hero_info = "[color=cccccc]Su an guclu short adayi bulunamadi.[/color]"
+            main.hero_info = "[color=dddddd]Su an guclu short adayi bulunamadi.[/color]"
 
         container = main.ids.coin_list
         container.clear_widgets()
@@ -971,6 +1043,7 @@ class RadarKVApp(App):
         if not coin:
             detail.coin_name = coin_name
             detail.score_text = "0"
+            detail.glow_r, detail.glow_g, detail.glow_b = self.get_glow(0)
             detail.info_text = "Veri bulunamadi"
             detail.analysis_text = "Bu coin icin veri henuz yuklenmedi."
             return
