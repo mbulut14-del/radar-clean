@@ -1,7 +1,215 @@
 #:kivy 2.1.0
+#:import dp kivy.metrics.dp
 
 <MainScreen>:
     ScrollView:
+        do_scroll_x: False
+
+        GridLayout:
+            cols: 1
+            spacing: dp(16)
+            padding: dp(14)
+            size_hint_y: None
+            height: self.minimum_height
+
+            canvas.before:
+                Color:
+                    rgba: 0.02, 0.02, 0.03, 1
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+
+            Label:
+                text: "SHORT RADAR"
+                font_size: "24sp"
+                bold: True
+                color: 1, 1, 1, 1
+                size_hint_y: None
+                height: dp(40)
+                halign: "left"
+                valign: "middle"
+                text_size: self.size
+
+            Label:
+                text: "EN GUCLU SHORT ADAYI"
+                font_size: "20sp"
+                bold: True
+                color: 1, 1, 1, 1
+                size_hint_y: None
+                height: dp(32)
+                halign: "left"
+                valign: "middle"
+                text_size: self.size
+
+            BoxLayout:
+                orientation: "horizontal"
+                size_hint_y: None
+                height: dp(220)
+                padding: dp(16)
+                spacing: dp(14)
+
+                canvas.before:
+                    Color:
+                        rgba: 1, 0.25, 0.08, 0.09
+                    RoundedRectangle:
+                        pos: self.x - dp(8), self.y - dp(8)
+                        size: self.width + dp(16), self.height + dp(16)
+                        radius: [28]
+
+                    Color:
+                        rgba: 1, 0.22, 0.08, 0.20
+                    RoundedRectangle:
+                        pos: self.x - dp(3), self.y - dp(3)
+                        size: self.width + dp(6), self.height + dp(6)
+                        radius: [26]
+
+                    Color:
+                        rgba: 0.10, 0.03, 0.03, 1
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [24]
+
+                    Color:
+                        rgba: 0.55, 0.07, 0.06, 0.98
+                    RoundedRectangle:
+                        pos: self.x + dp(6), self.y + dp(6)
+                        size: self.width - dp(12), self.height - dp(12)
+                        radius: [21]
+
+                    Color:
+                        rgba: 1, 0.40, 0.12, 0.95
+                    Line:
+                        width: 1.35
+                        rounded_rectangle: (self.x + dp(1), self.y + dp(1), self.width - dp(2), self.height - dp(2), dp(24))
+
+                    Color:
+                        rgba: 1, 0.75, 0.22, 0.70
+                    Line:
+                        width: 1
+                        rounded_rectangle: (self.x + dp(7), self.y + dp(7), self.width - dp(14), self.height - dp(14), dp(21))
+
+                    Color:
+                        rgba: 1, 1, 1, 0.05
+                    Line:
+                        width: 1
+                        points: self.x + dp(20), self.top - dp(24), self.right - dp(20), self.top - dp(24)
+
+                    Color:
+                        rgba: 1, 0.55, 0.20, 0.12
+                    Ellipse:
+                        pos: self.right - dp(165), self.top - dp(145)
+                        size: dp(185), dp(145)
+
+                    Color:
+                        rgba: 1, 0.20, 0.10, 0.10
+                    Ellipse:
+                        pos: self.x + dp(8), self.y - dp(32)
+                        size: dp(250), dp(140)
+
+                FloatLayout:
+                    size_hint_x: None
+                    width: dp(132)
+
+                    canvas.before:
+                        Color:
+                            rgba: 1, 0.35, 0.18, 0.16
+                        Ellipse:
+                            pos: self.x + dp(2), self.y + dp(2)
+                            size: dp(122), dp(122)
+
+                        Color:
+                            rgba: 1, 0.42, 0.20, 1
+                        Line:
+                            circle: self.center_x, self.center_y, dp(48)
+                            width: dp(8)
+
+                        Color:
+                            rgba: 0.22, 0.96, 0.72, 1
+                        Line:
+                            circle: self.center_x, self.center_y, dp(38)
+                            width: dp(6)
+
+                        Color:
+                            rgba: 0.03, 0.04, 0.08, 1
+                        Ellipse:
+                            pos: self.center_x - dp(30), self.center_y - dp(30)
+                            size: dp(60), dp(60)
+
+                    Label:
+                        id: hero_score
+                        text: "0"
+                        font_size: "26sp"
+                        bold: True
+                        color: 1, 1, 1, 1
+                        center: self.parent.center
+
+                BoxLayout:
+                    orientation: "vertical"
+                    spacing: dp(4)
+
+                    Widget:
+                        size_hint_y: None
+                        height: dp(4)
+
+                    Label:
+                        text: "EN GUCLU SHORT ADAYI"
+                        font_size: "14sp"
+                        bold: True
+                        color: 1, 0.88, 0.72, 1
+                        size_hint_y: None
+                        height: dp(22)
+                        halign: "left"
+                        valign: "middle"
+                        text_size: self.size
+
+                    Label:
+                        id: hero_coin
+                        text: "..."
+                        font_size: "28sp"
+                        bold: True
+                        color: 1, 1, 1, 1
+                        size_hint_y: None
+                        height: dp(42)
+                        halign: "left"
+                        valign: "middle"
+                        text_size: self.size
+
+                    Label:
+                        id: hero_info
+                        text: ""
+                        font_size: "16sp"
+                        markup: True
+                        color: 1, 1, 1, 1
+                        halign: "left"
+                        valign: "top"
+                        text_size: self.width, None
+                        size_hint_y: None
+                        height: self.texture_size[1]
+
+            Label:
+                text: "Gate.io Vadeli En Cok Yukselenler"
+                font_size: "20sp"
+                bold: True
+                color: 1, 1, 1, 1
+                size_hint_y: None
+                height: dp(36)
+                halign: "left"
+                valign: "middle"
+                text_size: self.size
+
+            GridLayout:
+                id: coin_list
+                cols: 1
+                spacing: dp(12)
+                size_hint_y: None
+                height: self.minimum_height
+
+
+<DetailScreen>:
+    ScrollView:
+        do_scroll_x: False
+
         GridLayout:
             cols: 1
             spacing: dp(14)
@@ -9,104 +217,132 @@
             size_hint_y: None
             height: self.minimum_height
 
-            Label:
-                text: "SHORT RADAR"
-                font_size: "24sp"
-                bold: True
-                size_hint_y: None
-                height: dp(40)
+            canvas.before:
+                Color:
+                    rgba: 0.02, 0.02, 0.03, 1
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
 
             Label:
-                text: "EN GÜÇLÜ SHORT ADAYI"
-                font_size: "20sp"
+                text: root.coin_name
+                font_size: "28sp"
                 bold: True
+                color: 1, 1, 1, 1
                 size_hint_y: None
-                height: dp(32)
+                height: dp(44)
+                halign: "left"
+                valign: "middle"
+                text_size: self.size
 
             BoxLayout:
                 orientation: "horizontal"
                 size_hint_y: None
-                height: dp(200)
+                height: dp(220)
                 padding: dp(16)
-                spacing: dp(12)
+                spacing: dp(14)
 
                 canvas.before:
                     Color:
-                        rgba: 0.15, 0.02, 0.02, 1
+                        rgba: 0.08, 0.09, 0.14, 1
                     RoundedRectangle:
                         pos: self.pos
                         size: self.size
                         radius: [22]
 
-                    Color:
-                        rgba: 1, 0.2, 0.2, 0.25
-                    RoundedRectangle:
-                        pos: self.x - 4, self.y - 4
-                        size: self.width + 8, self.height + 8
-                        radius: [26]
-
-                    Color:
-                        rgba: 1, 0.3, 0.3, 0.12
-                    Ellipse:
-                        pos: self.right - dp(180), self.top - dp(120)
-                        size: dp(220), dp(140)
-
                 FloatLayout:
                     size_hint_x: None
-                    width: dp(130)
+                    width: dp(132)
 
-                    canvas:
+                    canvas.before:
                         Color:
-                            rgba: 1, 0.3, 0.3, 1
-                        Line:
-                            circle: self.center_x, self.center_y, 52
-                            width: 8
+                            rgba: 0.20, 0.95, 0.72, 0.14
+                        Ellipse:
+                            pos: self.x + dp(2), self.y + dp(2)
+                            size: dp(122), dp(122)
 
                         Color:
-                            rgba: 0.2, 1, 0.7, 1
+                            rgba: 0.20, 0.95, 0.72, 1
                         Line:
-                            circle: self.center_x, self.center_y, 42
-                            width: 6
+                            circle: self.center_x, self.center_y, dp(48)
+                            width: dp(8)
+
+                        Color:
+                            rgba: 0.10, 0.55, 0.42, 1
+                        Line:
+                            circle: self.center_x, self.center_y, dp(38)
+                            width: dp(6)
+
+                        Color:
+                            rgba: 0.03, 0.04, 0.08, 1
+                        Ellipse:
+                            pos: self.center_x - dp(30), self.center_y - dp(30)
+                            size: dp(60), dp(60)
 
                     Label:
-                        id: hero_score
-                        text: "0"
-                        font_size: "26sp"
+                        text: root.score_text
+                        font_size: "24sp"
                         bold: True
+                        color: 1, 1, 1, 1
                         center: self.parent.center
 
                 BoxLayout:
                     orientation: "vertical"
+                    spacing: dp(4)
 
                     Label:
-                        text: "EN GÜÇLÜ SHORT ADAYI"
-                        font_size: "14sp"
+                        text: "COIN DETAYI"
+                        font_size: "17sp"
                         bold: True
+                        color: 1, 1, 1, 1
                         size_hint_y: None
                         height: dp(24)
+                        halign: "left"
+                        valign: "middle"
+                        text_size: self.size
 
                     Label:
-                        id: hero_coin
-                        text: "..."
-                        font_size: "28sp"
-                        bold: True
-
-                    Label:
-                        id: hero_info
-                        text: ""
-                        font_size: "14sp"
+                        text: root.info_text
                         markup: True
+                        font_size: "17sp"
+                        color: 1, 1, 1, 1
+                        halign: "left"
+                        valign: "top"
+                        text_size: self.width, None
+                        size_hint_y: None
+                        height: self.texture_size[1]
 
             Label:
-                text: "Gate.io Vadeli En Çok Yükselenler"
-                font_size: "20sp"
+                text: "Mini Analiz"
+                font_size: "22sp"
                 bold: True
+                color: 1, 1, 1, 1
                 size_hint_y: None
                 height: dp(36)
+                halign: "left"
+                valign: "middle"
+                text_size: self.size
 
-            GridLayout:
-                id: coin_list
-                cols: 1
-                spacing: dp(10)
+            BoxLayout:
                 size_hint_y: None
-                height: self.minimum_height
+                height: max(dp(180), analysis_label.texture_size[1] + dp(32))
+                padding: dp(16)
+
+                canvas.before:
+                    Color:
+                        rgba: 0.08, 0.09, 0.14, 1
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [22]
+
+                Label:
+                    id: analysis_label
+                    text: root.analysis_text
+                    font_size: "18sp"
+                    color: 1, 1, 1, 1
+                    halign: "left"
+                    valign: "top"
+                    text_size: self.width, None
+                    size_hint_y: None
+                    height: self.texture_size[1]
