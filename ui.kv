@@ -1,1 +1,77 @@
 
+#:kivy 2.1.0
+
+<MainScreen>:
+    ScrollView:
+        GridLayout:
+            cols: 1
+            spacing: dp(14)
+            padding: dp(14)
+            size_hint_y: None
+            height: self.minimum_height
+
+            Label:
+                text: "SHORT RADAR"
+                font_size: "24sp"
+                bold: True
+                size_hint_y: None
+                height: dp(40)
+
+            Label:
+                text: "EN GÜÇLÜ SHORT ADAYI"
+                font_size: "20sp"
+                bold: True
+                size_hint_y: None
+                height: dp(32)
+
+            BoxLayout:
+                id: hero_card
+                orientation: "horizontal"
+                size_hint_y: None
+                height: dp(180)
+                padding: dp(16)
+                spacing: dp(12)
+
+                canvas.before:
+                    Color:
+                        rgba: 0.9, 0.15, 0.15, 1
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [20]
+
+                Label:
+                    id: hero_score
+                    text: "0"
+                    size_hint_x: None
+                    width: dp(90)
+                    font_size: "26sp"
+                    bold: True
+
+                BoxLayout:
+                    orientation: "vertical"
+
+                    Label:
+                        id: hero_coin
+                        text: "..."
+                        font_size: "24sp"
+                        bold: True
+
+                    Label:
+                        id: hero_info
+                        text: ""
+                        markup: True
+
+            Label:
+                text: "Gate.io Vadeli En Çok Yükselenler"
+                font_size: "20sp"
+                bold: True
+                size_hint_y: None
+                height: dp(36)
+
+            GridLayout:
+                id: coin_list
+                cols: 1
+                spacing: dp(10)
+                size_hint_y: None
+                height: self.minimum_height
