@@ -50,9 +50,27 @@ jobs:
 
       - name: APK build
         run: |
-          buildozer -v android debug
+          set -o pipefail
+          buildozer -v android debug 2>&1 | tee build.log
+
+      - name: Gercek hata satirlari
+        if: failure()
+        run: |
+          echo "===== ILK KRITIK HATALAR ====="
+          grep -niE "traceback|exception|error:|parserexception|filenotfounderror|no such file|failed|kv.lang" build.log | head -n 40 || true
+          echo ""
+          echo "===== SON 200 SATIR ====="
+          tail -n 200 build.log || true
+
+      - name: Build log yukle
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: build.log
 
       - name: APK yukle
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: apk
