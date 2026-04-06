@@ -14,9 +14,13 @@ jobs:
       - name: Repo cek
         uses: actions/checkout@v4
 
+      - name: Dosya kontrol
+        run: ls -la
+
       - name: Build APK with Buildozer Action
         uses: ArtemSBulgakov/buildozer-action@v1.1.3
         with:
+          workdir: .
           command: buildozer android debug
 
       - name: APK yukle
