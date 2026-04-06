@@ -2,12 +2,13 @@ name: Build APK
 
 on:
   push:
-    branches: [ "main" ]
+    branches:
+      - main
   workflow_dispatch:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
 
     steps:
       - name: Repo cek
@@ -21,7 +22,7 @@ jobs:
       - name: Java kur
         uses: actions/setup-java@v4
         with:
-          distribution: "temurin"
+          distribution: temurin
           java-version: "17"
 
       - name: Sistem paketleri
@@ -30,10 +31,11 @@ jobs:
           sudo apt-get install -y \
             zip unzip autoconf libtool pkg-config \
             zlib1g-dev libncurses5-dev libncursesw5-dev \
-            libtinfo5 cmake libffi-dev libssl-dev \
+            cmake libffi-dev libssl-dev \
             build-essential ccache git \
             libltdl-dev libsqlite3-dev \
-            libbz2-dev libreadline-dev
+            libbz2-dev libreadline-dev \
+            libtinfo5
 
       - name: Buildozer kur
         run: |
@@ -46,31 +48,12 @@ jobs:
           rm -rf bin
           rm -f build.log
 
-      - name: Build APK
-        id: build_apk
+      - name: APK build
         run: |
-          set -o pipefail
-          buildozer android debug 2>&1 | tee build.log
+          buildozer -v android debug
 
-      - name: Gercek hatayi ayikla
-        if: failure()
-        run: |
-          echo "===== ILK KRITIK HATA SATIRLARI ====="
-          grep -n -i -m 20 -E "traceback|exception|error:|parserexception|filenotfounderror|no such file|failed|kv.lang" build.log || true
-          echo ""
-          echo "===== SON 120 SATIR ====="
-          tail -n 120 build.log || true
-
-      - name: Build log upload
-        if: always()
+      - name: APK yukle
         uses: actions/upload-artifact@v4
         with:
-          name: build-log
-          path: build.log
-
-      - name: APK upload
-        if: success()
-        uses: actions/upload-artifact@v4
-        with:
-          name: app-debug
+          name: apk
           path: bin/*.apk
