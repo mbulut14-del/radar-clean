@@ -9,10 +9,12 @@
             allow_stretch: True
             keep_ratio: False
             size_hint: 1, 1
+            pos_hint: {"x": 0, "y": 0}
 
         ScrollView:
             do_scroll_x: False
             bar_width: dp(6)
+            size_hint: 1, 1
 
             GridLayout:
                 cols: 1
@@ -52,6 +54,7 @@
                         allow_stretch: True
                         keep_ratio: False
                         size_hint: 1, 1
+                        pos_hint: {"x": 0, "y": 0}
 
                     Label:
                         id: hero_score
@@ -60,33 +63,21 @@
                         bold: True
                         color: 1, 1, 1, 1
                         size_hint: None, None
-                        size: dp(76), dp(76)
-                        pos_hint: {"x": 0.08, "center_y": 0.50}
+                        size: dp(88), dp(88)
+                        pos_hint: {"x": 0.10, "center_y": 0.50}
                         halign: "center"
-                        valign: "middle"
-                        text_size: self.size
-
-                    Label:
-                        text: "EN GUCLU SHORT"
-                        font_size: "14sp"
-                        bold: True
-                        color: 1, 0.7, 0.2, 1
-                        size_hint: None, None
-                        size: dp(220), dp(24)
-                        pos_hint: {"x": 0.43, "top": 0.76}
-                        halign: "left"
                         valign: "middle"
                         text_size: self.size
 
                     Label:
                         id: hero_coin
                         text: "Sinyal yok"
-                        font_size: "28sp"
+                        font_size: "26sp"
                         bold: True
                         color: 1, 1, 1, 1
                         size_hint: None, None
-                        size: dp(260), dp(42)
-                        pos_hint: {"x": 0.43, "top": 0.60}
+                        size: dp(360), dp(48)
+                        pos_hint: {"x": 0.43, "top": 0.68}
                         halign: "left"
                         valign: "middle"
                         text_size: self.size
@@ -95,11 +86,11 @@
                         id: hero_info
                         text: "Su an guclu short adayi bulunamadi."
                         markup: True
-                        font_size: "16sp"
+                        font_size: "15sp"
                         color: 0.95, 0.95, 0.95, 1
                         size_hint: None, None
-                        size: dp(235), dp(96)
-                        pos_hint: {"x": 0.43, "y": 0.14}
+                        size: dp(360), dp(96)
+                        pos_hint: {"x": 0.43, "y": 0.18}
                         halign: "left"
                         valign: "top"
                         text_size: self.size
@@ -121,3 +112,108 @@
                     spacing: dp(12)
                     size_hint_y: None
                     height: self.minimum_height
+
+
+<DetailScreen>:
+    ScrollView:
+        do_scroll_x: False
+        bar_width: dp(6)
+
+        GridLayout:
+            cols: 1
+            spacing: dp(14)
+            padding: dp(14)
+            size_hint_y: None
+            height: self.minimum_height
+
+            canvas.before:
+                Color:
+                    rgba: 0.03, 0.03, 0.05, 1
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+
+            Label:
+                text: root.coin_name
+                font_size: "30sp"
+                bold: True
+                color: 1, 1, 1, 1
+                size_hint_y: None
+                height: dp(44)
+                halign: "left"
+                valign: "middle"
+                text_size: self.size
+
+            BoxLayout:
+                size_hint_y: None
+                height: dp(220)
+                padding: dp(16)
+
+                canvas.before:
+                    Color:
+                        rgba: 0.08, 0.09, 0.14, 1
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [22]
+
+                BoxLayout:
+                    orientation: "vertical"
+                    spacing: dp(6)
+
+                    Label:
+                        text: "COIN DETAYI"
+                        font_size: "18sp"
+                        bold: True
+                        color: 1, 1, 1, 1
+                        size_hint_y: None
+                        height: dp(24)
+                        halign: "left"
+                        valign: "middle"
+                        text_size: self.size
+
+                    Label:
+                        text: root.info_text
+                        markup: True
+                        font_size: "17sp"
+                        color: 1, 1, 1, 1
+                        halign: "left"
+                        valign: "top"
+                        text_size: self.width, None
+                        size_hint_y: None
+                        height: self.texture_size[1]
+
+            Label:
+                text: "Mini Analiz"
+                font_size: "22sp"
+                bold: True
+                color: 1, 1, 1, 1
+                size_hint_y: None
+                height: dp(36)
+                halign: "left"
+                valign: "middle"
+                text_size: self.size
+
+            BoxLayout:
+                size_hint_y: None
+                height: max(dp(180), analysis_label.texture_size[1] + dp(32))
+                padding: dp(16)
+
+                canvas.before:
+                    Color:
+                        rgba: 0.08, 0.09, 0.14, 1
+                    RoundedRectangle:
+                        pos: self.pos
+                        size: self.size
+                        radius: [22]
+
+                Label:
+                    id: analysis_label
+                    text: root.analysis_text
+                    font_size: "18sp"
+                    color: 1, 1, 1, 1
+                    halign: "left"
+                    valign: "top"
+                    text_size: self.width, None
+                    size_hint_y: None
+                    height: self.texture_size[1]
