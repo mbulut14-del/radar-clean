@@ -44,12 +44,32 @@ jobs:
         run: |
           rm -rf .buildozer
           rm -rf bin
+          rm -f build.log
 
       - name: Build APK
+        id: build_apk
         run: |
-          buildozer android debug
+          set -o pipefail
+          buildozer android debug 2>&1 | tee build.log
+
+      - name: Gercek hatayi ayikla
+        if: failure()
+        run: |
+          echo "===== ILK KRITIK HATA SATIRLARI ====="
+          grep -n -i -m 20 -E "traceback|exception|error:|parserexception|filenotfounderror|no such file|failed|kv.lang" build.log || true
+          echo ""
+          echo "===== SON 120 SATIR ====="
+          tail -n 120 build.log || true
+
+      - name: Build log upload
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-log
+          path: build.log
 
       - name: APK upload
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: app-debug
