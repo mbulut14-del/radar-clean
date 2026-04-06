@@ -2,176 +2,128 @@
 #:import dp kivy.metrics.dp
 
 <MainScreen>:
-    ScrollView:
-        do_scroll_x: False
-        bar_width: dp(6)
+    FloatLayout:
 
-        GridLayout:
-            cols: 1
-            spacing: dp(16)
-            padding: dp(14)
-            size_hint_y: None
-            height: self.minimum_height
+        Image:
+            source: "assets/bg.png"
+            allow_stretch: True
+            keep_ratio: False
+            size_hint: 1, 1
+            pos_hint: {"x": 0, "y": 0}
 
-            canvas.before:
-                Color:
-                    rgba: 0.03, 0.03, 0.05, 1
-                Rectangle:
-                    pos: self.pos
-                    size: self.size
+        ScrollView:
+            do_scroll_x: False
+            bar_width: dp(6)
+            size_hint: 1, 1
 
-            Label:
-                text: "SHORT RADAR"
-                font_size: "24sp"
-                bold: True
-                color: 1, 1, 1, 1
+            GridLayout:
+                cols: 1
+                spacing: dp(16)
+                padding: dp(14)
                 size_hint_y: None
-                height: dp(40)
-                halign: "left"
-                valign: "middle"
-                text_size: self.size
-
-            Label:
-                text: "EN GUCLU SHORT ADAYI"
-                font_size: "20sp"
-                bold: True
-                color: 1, 1, 1, 1
-                size_hint_y: None
-                height: dp(34)
-                halign: "left"
-                valign: "middle"
-                text_size: self.size
-
-            FloatLayout:
-                size_hint_y: None
-                height: dp(220)
-
-                Image:
-                    source: "hero.png"
-                    allow_stretch: True
-                    keep_ratio: False
-                    size_hint: 1, 1
-                    pos_hint: {"x": 0, "y": 0}
+                height: self.minimum_height
 
                 Label:
-                    id: hero_score
-                    text: "0"
-                    font_size: "30sp"
+                    text: "SHORT RADAR"
+                    font_size: "24sp"
                     bold: True
                     color: 1, 1, 1, 1
-                    size_hint: None, None
-                    size: dp(72), dp(72)
-                    pos_hint: {"x": 0.06, "center_y": 0.50}
-                    halign: "center"
-                    valign: "middle"
-                    text_size: self.size
-
-                Label:
-                    text: "EN GUCLU SHORT"
-                    font_size: "14sp"
-                    bold: True
-                    color: 1, 0.70, 0.22, 1
-                    size_hint: None, None
-                    size: dp(210), dp(24)
-                    pos_hint: {"x": 0.39, "top": 0.76}
+                    size_hint_y: None
+                    height: dp(40)
                     halign: "left"
-                    valign: "middle"
-                    text_size: self.size
-
-                Label:
-                    id: hero_coin
-                    text: "Sinyal yok"
-                    font_size: "28sp"
-                    bold: True
-                    color: 1, 1, 1, 1
-                    size_hint: None, None
-                    size: dp(260), dp(40)
-                    pos_hint: {"x": 0.39, "top": 0.60}
-                    halign: "left"
-                    valign: "middle"
-                    text_size: self.size
-
-                Label:
-                    id: hero_info
-                    text: "Su an guclu short adayi bulunamadi."
-                    font_size: "16sp"
-                    color: 0.92, 0.92, 0.92, 1
-                    size_hint: None, None
-                    size: dp(230), dp(96)
-                    pos_hint: {"x": 0.39, "y": 0.16}
-                    halign: "left"
-                    valign: "top"
-                    text_size: self.size
-                
-
-                Label:
-                    id: hero_score
-                    text: "0"
-                    font_size: "30sp"
-                    bold: True
-                    color: 1, 1, 1, 1
-                    size_hint: None, None
-                    size: dp(72), dp(72)
-                    pos_hint: {"x": 0.06, "center_y": 0.50}
-                    halign: "center"
                     valign: "middle"
                     text_size: self.size
 
                 Label:
                     text: "EN GUCLU SHORT ADAYI"
-                    font_size: "14sp"
-                    bold: True
-                    color: 1, 0.70, 0.22, 1
-                    size_hint: None, None
-                    size: dp(210), dp(24)
-                    pos_hint: {"x": 0.39, "top": 0.76}
-                    halign: "left"
-                    valign: "middle"
-                    text_size: self.size
-
-                Label:
-                    id: hero_coin
-                    text: "Sinyal yok"
-                    font_size: "28sp"
+                    font_size: "20sp"
                     bold: True
                     color: 1, 1, 1, 1
-                    size_hint: None, None
-                    size: dp(220), dp(40)
-                    pos_hint: {"x": 0.39, "top": 0.60}
+                    size_hint_y: None
+                    height: dp(34)
                     halign: "left"
                     valign: "middle"
                     text_size: self.size
 
+                FloatLayout:
+                    size_hint_y: None
+                    height: dp(220)
+
+                    Image:
+                        source: "assets/hero.png"
+                        allow_stretch: True
+                        keep_ratio: False
+                        size_hint: 1, 1
+                        pos_hint: {"x": 0, "y": 0}
+
+                    Label:
+                        id: hero_score
+                        text: "0"
+                        font_size: "30sp"
+                        bold: True
+                        color: 1, 1, 1, 1
+                        size_hint: None, None
+                        size: dp(76), dp(76)
+                        pos_hint: {"x": 0.08, "center_y": 0.50}
+                        halign: "center"
+                        valign: "middle"
+                        text_size: self.size
+
+                    Label:
+                        text: "EN GUCLU SHORT"
+                        font_size: "14sp"
+                        bold: True
+                        color: 1, 0.72, 0.25, 1
+                        size_hint: None, None
+                        size: dp(220), dp(24)
+                        pos_hint: {"x": 0.43, "top": 0.76}
+                        halign: "left"
+                        valign: "middle"
+                        text_size: self.size
+
+                    Label:
+                        id: hero_coin
+                        text: "Sinyal yok"
+                        font_size: "28sp"
+                        bold: True
+                        color: 1, 1, 1, 1
+                        size_hint: None, None
+                        size: dp(260), dp(42)
+                        pos_hint: {"x": 0.43, "top": 0.60}
+                        halign: "left"
+                        valign: "middle"
+                        text_size: self.size
+
+                    Label:
+                        id: hero_info
+                        text: "Su an guclu short adayi bulunamadi."
+                        markup: True
+                        font_size: "16sp"
+                        color: 0.95, 0.95, 0.95, 1
+                        size_hint: None, None
+                        size: dp(235), dp(96)
+                        pos_hint: {"x": 0.43, "y": 0.14}
+                        halign: "left"
+                        valign: "top"
+                        text_size: self.size
+
                 Label:
-                    id: hero_info
-                    text: "Su an guclu short adayi bulunamadi."
-                    markup: True
-                    font_size: "16sp"
-                    color: 0.92, 0.92, 0.92, 1
-                    size_hint: None, None
-                    size: dp(210), dp(96)
-                    pos_hint: {"x": 0.39, "y": 0.16}
+                    text: "Gate.io Vadeli En Cok Yukselenler"
+                    font_size: "18sp"
+                    bold: True
+                    color: 1, 1, 1, 1
+                    size_hint_y: None
+                    height: dp(34)
                     halign: "left"
-                    valign: "top"
+                    valign: "middle"
                     text_size: self.size
 
-            Label:
-                text: "Gate.io Vadeli En Cok Yukselenler"
-                font_size: "20sp"
-                bold: True
-                color: 1, 1, 1, 1
-                size_hint_y: None
-                height: dp(36)
-                halign: "left"
-                valign: "middle"
-                text_size: self.size
-
-            GridLayout:
-                id: coin_list
-                cols: 1
-                spacing: dp(12)
-                size_hint_y: None
-                height: self.minimum_height
+                GridLayout:
+                    id: coin_list
+                    cols: 1
+                    spacing: dp(12)
+                    size_hint_y: None
+                    height: self.minimum_height
 
 
 <DetailScreen>:
@@ -206,9 +158,7 @@
 
             BoxLayout:
                 size_hint_y: None
-                height: dp(225)
-                padding: dp(16)
-                spacing: dp(14)
+                height: dp(220)
 
                 canvas.before:
                     Color:
@@ -218,29 +168,7 @@
                         size: self.size
                         radius: [22]
 
-                Label:
-                    text: root.score_text
-                    size_hint_x: None
-                    width: dp(120)
-                    font_size: "26sp"
-                    bold: True
-                    color: 1, 1, 1, 1
-                    halign: "center"
-                    valign: "middle"
-                    text_size: self.size
-
-                    canvas.before:
-                        Color:
-                            rgba: 1, 0.38, 0.28, 1
-                        Line:
-                            ellipse: self.x + dp(14), self.y + dp(14), self.width - dp(28), self.height - dp(28)
-                            width: dp(8)
-
-                        Color:
-                            rgba: 0.03, 0.04, 0.08, 1
-                        Ellipse:
-                            pos: self.x + dp(28), self.y + dp(28)
-                            size: self.width - dp(56), self.height - dp(56)
+                padding: dp(16)
 
                 BoxLayout:
                     orientation: "vertical"
