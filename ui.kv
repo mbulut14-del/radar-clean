@@ -46,14 +46,63 @@
                 size_hint_y: None
                 height: dp(220)
 
-                canvas.before:
-                    Color:
-                        rgba: 1, 1, 1, 1
-                    RoundedRectangle:
-                        pos: self.pos
-                        size: self.size
-                        radius: [24]
-                        source: "hero.png"
+                Image:
+                    source: "hero.png"
+                    allow_stretch: True
+                    keep_ratio: False
+                    size_hint: 1, 1
+                    pos_hint: {"x": 0, "y": 0}
+
+                Label:
+                    id: hero_score
+                    text: "0"
+                    font_size: "30sp"
+                    bold: True
+                    color: 1, 1, 1, 1
+                    size_hint: None, None
+                    size: dp(72), dp(72)
+                    pos_hint: {"x": 0.06, "center_y": 0.50}
+                    halign: "center"
+                    valign: "middle"
+                    text_size: self.size
+
+                Label:
+                    text: "EN GUCLU SHORT"
+                    font_size: "14sp"
+                    bold: True
+                    color: 1, 0.70, 0.22, 1
+                    size_hint: None, None
+                    size: dp(210), dp(24)
+                    pos_hint: {"x": 0.39, "top": 0.76}
+                    halign: "left"
+                    valign: "middle"
+                    text_size: self.size
+
+                Label:
+                    id: hero_coin
+                    text: "Sinyal yok"
+                    font_size: "28sp"
+                    bold: True
+                    color: 1, 1, 1, 1
+                    size_hint: None, None
+                    size: dp(260), dp(40)
+                    pos_hint: {"x": 0.39, "top": 0.60}
+                    halign: "left"
+                    valign: "middle"
+                    text_size: self.size
+
+                Label:
+                    id: hero_info
+                    text: "Su an guclu short adayi bulunamadi."
+                    font_size: "16sp"
+                    color: 0.92, 0.92, 0.92, 1
+                    size_hint: None, None
+                    size: dp(230), dp(96)
+                    pos_hint: {"x": 0.39, "y": 0.16}
+                    halign: "left"
+                    valign: "top"
+                    text_size: self.size
+                
 
                 Label:
                     id: hero_score
